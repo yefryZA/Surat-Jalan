@@ -426,8 +426,8 @@
         return "";
     }
 
-  // --- RENDER DASHBOARD ---
-   onValue(ref(db, `bbs_logs/${dbKey}`), (snap) => {
+// --- RENDER DASHBOARD ---
+  onValue(ref(db, `bbs_logs/${dbKey}`), (snap) => {
     const data = snap.val();
     let tm = 0, tb = 0, otw = 0; 
     rawData = [];
@@ -438,8 +438,8 @@
         Object.keys(data).forEach(k => {
             const i = data[k];
             
-            // Konversi status ke huruf besar semua agar aman dari error pengetikan ceker
-            const statusMobil = (i.status || "").toUpperCase();
+            // Konversi status ke huruf besar semua agar aman dari error pengetikan
+            let statusMobil = (i.status || "").toUpperCase();
             
             if(statusMobil === 'ARCHIVED') return;
 
@@ -451,30 +451,34 @@
             // Siapkan element untuk status / tombol aksi sesuai LOGIKA BARU PT.BBS
             let statusElement = "";
 
-            if(statusMobil === 'OTW') {
-                otw++;
-            
+            // LOGIKA OTOMATIS: Jika status aslinya OTW, ATAU jika statusnya masih MUAT/KOSONG tapi BOP sudah di-set admin
+            if (statusMobil === 'OTW' || ((statusMobil === 'MUAT' || statusMobil === '' || !i.status) && i.bop_unit)) {
+                
+                otw++; // Tambah counter armada yang sedang di jalan
+                
                 statusElement = `
-                    <button onclick="openOtwManager('${k}', '${i.plat}')" style="background:#FF9800; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:10px; font-weight:bold; cursor:pointer; font-family:'Orbitron';">
-                        ${statusMobil} (PROSES)
+                    <button onclick="window.openOtwManager('${k}', '${i.plat}')" style="background:#FF9800; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:10px; font-weight:bold; cursor:pointer; font-family:'Orbitron'; width:100%; min-width:95px;">
+                        OTW (PROSES)
                     </button>
                 `;
-            } else if(statusMobil === 'MUAT' || statusMobil === '' || !i.status) {
-                // JIKA STATUS BARU MUAT ATAU KOSONG: Tombol SET BOP Wajib Muncul!
+                
+            } else if (statusMobil === 'MUAT' || statusMobil === '' || !i.status) {
+                // JIKA STATUS BARU MUAT DAN BOP BELUM DI-SET SAMA SEKALI
                 statusElement = `
                     <button onclick="window.openOps('${k}', '${i.plat}')" style="background:var(--gold); color:#0A192F; border:none; padding:6px 12px; border-radius:6px; font-size:10px; font-weight:bold; cursor:pointer; font-family:'Orbitron'; min-width:95px; display:inline-block;">
                         ⚙️ SET BOP
                     </button>
                 `;
                 
-                // JIKA BOP SUDAH DIKUNCI ADMIN, OTOMATIS BERIKAN AKSES TOMBOL PROSES OTW DI BAWAHNYA
-                if(i.bop_unit) {
-                    statusElement += `
-                        <button onclick="window.openOtwManager('${k}', '${i.plat}')" style="background:var(--green); color:#0A192F; border:none; padding:6px 12px; border-radius:6px; font-size:10px; font-weight:bold; cursor:pointer; font-family:'Orbitron'; margin-top:5px; min-width:95px; display:inline-block;">
-                            🚀 PROSES OTW
-                        </button>
-                    `;
-                }
+            } else {
+                // Status lainnya (misal DONE dll)
+                statusElement = `
+                    <span class="badge" style="background:#4CAF50; padding:5px 10px; border-radius:4px; font-size:10px; font-weight:bold; color:white;">
+                        ${i.status}
+                    </span>
+                `;
+            }
+
             } else {
                 // Status lainnya (misal DONE dll)
                 statusElement = `
