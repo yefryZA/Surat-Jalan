@@ -479,14 +479,7 @@
                 `;
             }
 
-            } else {
-                // Status lainnya (misal DONE dll)
-                statusElement = `
-                    <span class="badge" style="background:#4CAF50; padding:5px 10px; border-radius:4px; font-size:10px; font-weight:bold;">
-                        ${i.status}
-                    </span>
-                `;
-            }
+            // Kode kelanjutan append child list.innerHTML milik Abang di bawahnya tinggal diteruskan...
             
             // Render Baris Truck ke dalam dashboard utama admin dengan info BOP & MARGIN dinamis
             list.innerHTML += `<div class="truck-item" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 8px 0;">
