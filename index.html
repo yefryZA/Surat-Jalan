@@ -165,11 +165,12 @@
             <label class="lbl">FOTO KTP</label>
             <input type="file" capture="camera" id="m-ktp">
             
-            <label class="lbl" style="color:var(--gold); font-weight:bold;">⚙️ BIAYA BOP: HARGA MATERIAL (RP)</label>
-            <input type="text" id="m-ops-material" placeholder="CONTOH: 700.000" style="border: 1px solid var(--gold);" oninput="formatRupiahOtomatis(this)">
+           <label class="lbl" style="color:var(--gold); font-weight:bold;">⚙️ BIAYA BOP: HARGA MATERIAL (RP)</label>
+            <input type="text" id="m-ops-material" inputmode="numeric" pattern="[0-9]*" placeholder="CONTOH: 700.000" style="border: 1px solid var(--gold);" oninput="formatRupiahOtomatis(this)">
             
             <label class="lbl" style="color:var(--gold); font-weight:bold;">⚙️ BIAYA BOP: ONGKOS TRUK (RP)</label>
-            <input type="text" id="m-ops-mobil" placeholder="CONTOH: 300.000" style="border: 1px solid var(--gold); margin-bottom:20px;" oninput="formatRupiahOtomatis(this)">
+            <input type="text" id="m-ops-mobil" inputmode="numeric" pattern="[0-9]*" placeholder="CONTOH: 300.000" style="border: 1px solid var(--gold); margin-bottom:20px;" oninput="formatRupiahOtomatis(this)">
+
             <button class="btn btn-green" onclick="prosesMuat()">SIMPAN & CETAK SURAT JALAN</button>
             
             <div id="qr-canvas"></div>
