@@ -744,10 +744,6 @@ window.prosesTugasSelesai = async () => {
     }
 };
 
-// ============================================================================
-// 🚀 LOGIKA JAVASCRIPT POPUP PENGELUARAN GLOBAL PT. BBS
-// ============================================================================
-
 // 1. Fungsi Membuka PopUp Pengeluaran & Sinkronisasi Real-Time dengan Firebase
 window.openPopUpPengeluaran = async () => {
     const m = document.getElementById('modal-pengeluaran-global');
@@ -844,8 +840,7 @@ window.generatePDF = async (item, jamBongkarPasti) => {
     const marginMobil = Number(item.margin_per_unit) || 0;
 
     try {
-        // 2. 🚨 SUNTIKAN AMAN: Kita paksa simpan/update ulang data ini ke Firebase dengan status DONE.
-        // Ini memastikan meskipun fungsi luar mencoba menghapusnya, data ini langsung ditulis ulang seketika!
+   
         await set(ref(db, `bbs_logs/${dbKey}/${window.currentActiveKey}`), {
             ...item,
             volB: vBongkar,
@@ -857,8 +852,7 @@ window.generatePDF = async (item, jamBongkarPasti) => {
 
         alert(`✅ DATA UNIT ${item.plat || ''} BERHASIL DIKUNCI MASUK ARSIP!\nData aman di Firebase & siap ditarik ke laporan global.`);
         
-        // 3. Muat ulang halaman agar dashboard bersih menampilkan data terbaru tanpa sisa popup
-        // Trik ini sekaligus memotong/menghentikan fungsi remove() bawaan luar yang berjalan setelah fungsi ini.
+     
         location.reload();
 
     } catch (error) {
@@ -869,9 +863,6 @@ window.generatePDF = async (item, jamBongkarPasti) => {
     return false;
 };
 
-// ============================================================================
-// --- GENERATE PDF KESELURUHAN + LOGIKA POTONG PENGELUARAN GLOBAL (MASSAL) ---
-// ============================================================================
 window.generatePDFKeseluruhan = async () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('l', 'mm', 'a4'); 
@@ -942,7 +933,7 @@ window.generatePDFKeseluruhan = async () => {
         doc.setFontSize(16); doc.setFont("helvetica", "bold");
         doc.text("PT. BERKAH BAJA STEEL", 148, 14, { align: "center" });
         doc.setFontSize(10); doc.setFont("helvetica", "normal");
-        doc.text("REKAPITULASI KESELURUHAN DATA PENGIRIMAN & LOGISTIK OPERASIONAL", 148, 20, { align: "center" });
+        doc.text("REKAPITULASI KESELURUHAN DATA PENGIRIMAN & BIAYA OPERASIONAL", 148, 20, { align: "center" });
         
         // 4. Render Tabel Laporan Global
         doc.autoTable({
