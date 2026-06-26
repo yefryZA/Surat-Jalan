@@ -95,7 +95,7 @@
     <div style="display: flex; align-items: stretch; justify-content: space-between; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
         
         <div class="otw-container" style="flex: 1; min-width: 220px; margin: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 12px; min-height: 60px;">
-            <span class="lbl" style="color:#fff; margin: 0; font-size: 11px;">UNIT DALAM PERJALANAN (OTW)</span>
+            <span class="lbl" style="color:#fff; margin: 0; font-size: 11px;">TRUCK DALAM PERJALANAN</span>
             <span id="d-count-otw" class="otw-val" style="line-height: 1; margin-top: 4px;">0</span>
         </div>
 
@@ -286,11 +286,42 @@
         }
     }
 
-  async function printSuratJalan(data) {
-    const tgl = new Date().toLocaleString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
-    const jam = new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+// --- FUNGSI PEMBANTU: UBAH ANGKA BULAN KE ROMAWI ---
+function getBulanRomawi(bulanAngka) {
+    const romawi = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+    return romawi[bulanAngka - 1] || "I";
+}
+
+// --- FUNGSI UTAMA PRINT SURAT JALAN (KOTAK NOMOR SERI MINIMALIS) ---
+async function printSuratJalan(data) {
+    const tglObj = new Date();
+    const tgl = tglObj.toLocaleString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+    const jam = tglObj.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
     
-    const printArea = document.createElement('div');
+    const bulanRomawi = getBulanRomawi(tglObj.getMonth() + 1);
+    const tahunSekarang = tglObj.getFullYear();
+
+    const keyProject = typeof dbKey !== 'undefined' ? dbKey : (data.dbKey || "default_project");
+
+    let nomorUrutTerakhir = 0;
+    const counterRef = ref(db, `bbs_counter_sj/${keyProject}`);
+
+    try {
+        // 1. Ambil & Naikkan nomor urut di Firebase
+        const counterSnap = await get(counterRef);
+        if (counterSnap.exists()) {
+            nomorUrutTerakhir = Number(counterSnap.val()) || 0;
+        }
+
+        const nomorBaru = nomorUrutTerakhir + 1;
+        await set(counterRef, nomorBaru);
+
+        // 2. Format Nomor Surat Jalan Lengkap
+        const stringNomorUrut = String(nomorBaru).padStart(3, '0');
+        const nomorSuratJalanLengkap = `${stringNomorUrut}/bbs/${bulanRomawi}/${tahunSekarang}`;
+
+        // 3. Gambar Struktur HTML (Kotak nomor dirancang minimalis)
+     const printArea = document.createElement('div');
     printArea.style = "width: 380px; padding: 20px; background: white; color: black; font-family: monospace; position: absolute; left: -9999px; top: 0;";
     printArea.innerHTML = `
     <div style="text-align: center; font-weight: bold; font-size: 18px;">PT. BERKAH BAJA STEEL</div>
@@ -313,11 +344,16 @@
                     </td>
                 </tr>
 
-                <tr><td>TOTAL</td><td>:</td><td><b>${data.volM || 0} M3</b></td></tr>
+                <tr><td>TOTAL MUAT</td><td>:</td><td><b>${data.volM || 0} M3</b></td></tr>
             </table>
+            
+            <div style="text-align: center; padding: 8px 0; margin: 10px 0; border: 1px solid black; border-radius: 4px;">
+                <div style="font-size: 11px; color: #444; font-weight: bold; text-transform: uppercase;">Nomor Surat Jalan</div>
+                <div style="font-size: 18px; font-weight: bold; color: black; letter-spacing: 0.5px; font-family: monospace; margin-top: 4px;">
+                    ${nomorSuratJalanLengkap}
+                </div>
+            </div>
 
-            <div style="text-align: center; margin-top: 5px;">ID SURAT: ${data.id}</div>
-            <div id="qrcode-box" style="display: flex; justify-content: center; padding: 10px;"></div>
             -----------------------------------------------<br>
 
             <table style="width: 100%; font-family: monospace; font-size: 11px; text-align: center; border-collapse: collapse;">
@@ -326,18 +362,12 @@
                     <td style="width: 50%; vertical-align: top;">Mengetahui,</td>
                 </tr>
                 <tr>
-                    <td style="height: 60px; vertical-align: middle;">
-                        
-                    </td>
-                    <td style="height: 60px; padding: 5px 0;">
-                        <img src="https://raw.githubusercontent.com/yefryZA/SILSILAH-KELUARGA-H.-ZAINAL-ABIDIN/main/Stempel.png" 
-                             crossOrigin="anonymous"
-                             style="width: 90px; height: auto; display: block; margin: 0 auto;" />
-                    </td>
+                    <td style="height: 50px; vertical-align: middle;"></td>
+                    <td style="height: 50px; vertical-align: middle;"></td>
                 </tr>
                 <tr>
                     <td>( _________________ )</td>
-                    <td><b>HERMAN</b><br>Pengurus</td>
+                    <td><b>HERMAN</b><br>Penanggung Jawab</td>
                 </tr>
             </table>
             -----------------------------------------------<br>
@@ -345,16 +375,11 @@
             <div style="text-align: center; font-size: 11px; margin-top: 15px;">⚓ NIAT BAIK ‖ KERJA BAIK ‖ REZEKI BAIK ⚓</div>
             <div style="text-align: center; font-size: 10px; margin-top:10px;">Hati-hati Pak Sopir, KELUARGA menunggu ANDA dirumah.</div>
         </div>
-    </div>
-`;
+    </div>`;
 
         document.body.appendChild(printArea);
-        
-        new QRCode(document.getElementById("qrcode-box"), {
-            text: "https://berkahbajasteel.web.app/verifikasi?id=" + data.id,
-            width: 150, height: 150
-        });
 
+        // 4. Render html2canvas & Download Gambar (.png)
         setTimeout(() => {
             html2canvas(printArea).then(canvas => {
                 const imageData = canvas.toDataURL("image/png");
@@ -362,13 +387,20 @@
                 link.download = `STRUK_${data.plat}_${data.id.substring(0,5)}.png`;
                 link.href = imageData;
                 link.click();
+                
                 document.body.removeChild(printArea);
                 document.getElementById('load-txt').innerHTML = "<b style='color:green'>STRUK TERDOWNLOAD!</b><br>Buka Galeri & Cetak Gambar.";
                 document.getElementById('loader').style.display = 'flex';
+                
                 setTimeout(() => { location.reload(); }, 3000);
             });
         }, 1000);
+
+    } catch (error) {
+        console.error("Error antrean Surat Jalan:", error);
+        alert("Gagal memproses nomor surat jalan otomatis.");
     }
+}
 
 window.prosesMuat = async () => {
         const p = document.getElementById('m-plat').value.toUpperCase();
@@ -480,25 +512,10 @@ onValue(ref(db, `bbs_logs/${dbKey}`), (snap) => {
             
                 statusElement = `
                     <button onclick="openOtwManager('${k}', '${i.plat}')" style="background:#FF9800; color:white; border:none; padding:8px 16px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; font-family:'Orbitron'; width: 100%; text-align: center;">
-                        ${statusMobil} (PROSES BONGKAR)
+                        ${statusMobil} ( PROSES BONGKAR )
                     </button>
                 `;
-            } else if(statusMobil === 'MUAT' || statusMobil === '' || !i.status) {
-                // JIKA STATUS BARU MUAT ATAU KOSONG: Tombol SET BOP Wajib Muncul!
-                statusElement = `
-                    <button onclick="window.openOps('${k}', '${i.plat}')" style="background:var(--gold); color:#0A192F; border:none; padding:8px 16px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; font-family:'Orbitron'; width: 100%; text-align: center;">
-                        ⚙️ SET BOP
-                    </button>
-                `;
-                
-                // JIKA BOP SUDAH DIKUNCI ADMIN, OTOMATIS BERIKAN AKSES TOMBOL PROSES OTW DI BAWAHNYA
-                if(i.bop_unit) {
-                    statusElement += `
-                        <button onclick="window.openOtwManager('${k}', '${i.plat}')" style="background:var(--green); color:#0A192F; border:none; padding:8px 16px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; font-family:'Orbitron'; margin-top:6px; width: 100%; text-align: center;">
-                            🚀 PROSES OTW
-                        </button>
-                    `;
-                }
+               
             } else {
                 // Status lainnya (misal DONE dll)
                 statusElement = `
