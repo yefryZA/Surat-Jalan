@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SURAT JALAN PT. BBS</title>
-     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Poppins:wght@400;600&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
@@ -100,8 +99,12 @@
             <span id="d-count-otw" class="otw-val" style="line-height: 1; margin-top: 4px;">0</span>
         </div>
 
+        <button class="btn" style="background:#e74c3c; color:#ffffff; font-weight:bold; font-family:'Orbitron'; font-size: 11px; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; flex: 1; min-width: 220px; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 60px;" onclick="window.openPopUpPengeluaran()">
+            💸 PENGELUARAN
+        </button>
+
         <button class="btn" style="background:#2ecc71; color:#000000; font-weight:bold; font-family:'Orbitron'; font-size: 12px; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; flex: 1; min-width: 220px; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 60px;" onclick="window.generatePDFKeseluruhan()">
-            📊 GENERATE PDF
+            📊 PDF
         </button>
         
     </div>
@@ -199,6 +202,36 @@
             <p style="font-size: 9px; color: var(--slate); margin-top: 5px;">*Klik gambar untuk memperbesar</p>
         </div>
     </div>
+
+    <div id="modal-pengeluaran-global" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.75); overflow-y: auto;">
+    <div style="background-color: #1a1a1a; color: white; margin: 12% auto; padding: 20px; border: 1px solid #333; width: 90%; max-width: 400px; border-radius: 10px; font-family: 'Poppins', sans-serif; box-shadow: 0 4px 25px rgba(0,0,0,0.6);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px;">
+            <h3 style="margin: 0; font-size: 15px; color: #e74c3c; font-family: 'Orbitron'; letter-spacing: 0.5px;">💸 MANAJEMEN PENGELUARAN</h3>
+            <span onclick="window.closePopUpPengeluaran()" style="color: #aaa; font-size: 26px; font-weight: bold; cursor: pointer; line-height: 1;">&times;</span>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="font-size: 12px; color: #bbb; display: block; margin-bottom: 5px;">Rincian / Keterangan Biaya:</label>
+            <input type="text" id="ins-ops-ket" placeholder="Contoh: Beli Solar / Kasbon Sopir" style="width: 100%; padding: 10px; background: #2b2b2b; border: 1px solid #444; color: white; border-radius: 6px; font-size: 13px; box-sizing: border-box; margin-bottom: 12px; font-family: 'Poppins';">
+            
+            <label style="font-size: 12px; color: #bbb; display: block; margin-bottom: 5px;">Nominal (Rp):</label>
+            <input type="text" id="ins-ops-nom" placeholder="Contoh: 150,000" oninput="formatInputRibuan(this)" inputmode="numeric" style="width: 100%; padding: 10px; background: #2b2b2b; border: 1px solid #444; color: white; border-radius: 6px; font-size: 13px; box-sizing: border-box; margin-bottom: 15px; font-family: 'Poppins';">
+            
+            <button onclick="window.simpanPengeluaranBaru()" style="width: 100%; background: #2ecc71; color: #000; border: none; padding: 11px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; font-family: 'Poppins';">
+                💾 SIMPAN DATA
+            </button>
+        </div>
+
+        <div style="border-top: 1px solid #333; padding-top: 15px;">
+            <h4 style="margin: 0 0 10px 0; font-size: 12px; color: #00e5ff; font-weight: 600;">Daftar Pengeluaran Aktif:</h4>
+            
+            <div id="ops-list-popup" style="max-height: 180px; overflow-y: auto; background: #0f0f0f; padding: 10px; border-radius: 6px; border: 1px solid #222;">
+                </div>
+        </div>
+
+    </div>
+</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -582,29 +615,43 @@ onValue(ref(db, `bbs_logs/${dbKey}`), (snap) => {
     }
 });
 
+// ============================================================================
+// --- FUNGSI HITUNG UANG (VERSI COCOK UNTUK POTONG PROFIT GLOBAL) ---
+// ============================================================================
 async function hitungUang(tb, jumlahMobil = 0) {
     const snapOps = await get(ref(db, `bbs_operasional/${dbKey}`));
-    totalOps = 0;
+    let totalOpsLocal = 0; // Menggunakan variabel lokal agar hitungan akurat
     
-    // 1. Ambil elemen list operasional
+    // 1. Ambil elemen list operasional di layar dashboard
     const oList = document.getElementById('ops-list'); 
     
-    // Cek dulu: Kalau oList ada (hanya di Dashboard Admin), baru jalankan loop operasional
+    // 2. Cek: Jika elemen list ada di layar, gambar daftarnya
     if(oList) {
         oList.innerHTML = "";
         if(snapOps.val()) {
             Object.keys(snapOps.val()).forEach(k => {
                 const o = snapOps.val()[k]; 
-                totalOps += Number(o.nom);
-                oList.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px;"><span>- ${o.ket}</span><span>RP ${o.nom.toLocaleString()} <b onclick="delOps('${k}')" style="color:red; cursor:pointer">X</b></span></div>`;
+                totalOpsLocal += Number(o.nom);
+                oList.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px;">
+                        <span>- ${o.ket}</span>
+                        <span>RP ${o.nom.toLocaleString()} 
+                            <b onclick="delOps('${k}')" style="color:red; cursor:pointer; margin-left:5px;">X</b>
+                        </span>
+                    </div>`;
             });
         }
     } else {
-        // Kalau oList nggak ada, kita tetap hitung totalOps dari DB buat PDF
+        // Jika diakses dari halaman non-admin (tidak ada oList), tetap hitung total nominalnya
         if(snapOps.val()) {
-            Object.values(snapOps.val()).forEach(o => { totalOps += Number(o.nom); });
+            Object.values(snapOps.val()).forEach(o => { 
+                totalOpsLocal += Number(o.nom); 
+            });
         }
     }
+
+    // 🚀 PENTING: Mengirimkan hasil total pengeluaran agar bisa dipakai di fungsi lain/PDF
+    return totalOpsLocal;
 }
 
 // --- MANAJEMEN POPUP UNIT OTW (INPUT HARGA JUAL & VOLUME BONGKAR) ---
@@ -697,6 +744,94 @@ window.prosesTugasSelesai = async () => {
     }
 };
 
+// ============================================================================
+// 🚀 LOGIKA JAVASCRIPT POPUP PENGELUARAN GLOBAL PT. BBS
+// ============================================================================
+
+// 1. Fungsi Membuka PopUp Pengeluaran & Sinkronisasi Real-Time dengan Firebase
+window.openPopUpPengeluaran = async () => {
+    const m = document.getElementById('modal-pengeluaran-global');
+    if(m) {
+        m.style.display = 'block';
+        
+        // Memasang listener onValue khusus untuk merender list di dalam PopUp secara real-time
+        onValue(ref(db, `bbs_operasional/${dbKey}`), (snap) => {
+            const popupList = document.getElementById('ops-list-popup');
+            if(!popupList) return;
+            
+            popupList.innerHTML = "";
+            let dataOps = snap.val();
+            
+            if(dataOps) {
+                Object.keys(dataOps).forEach(k => {
+                    const o = dataOps[k];
+                    popupList.innerHTML += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding: 6px 0; border-bottom: 1px solid #222; font-family: 'Poppins', sans-serif;">
+                            <span style="color:#ddd;">- ${o.ket}</span>
+                            <span style="color: #ff7675; font-weight:bold;">
+                                RP ${Number(o.nom).toLocaleString('id-ID')} 
+                                <b onclick="window.delOpsPopup('${k}')" style="color:#ff5252; cursor:pointer; margin-left:10px; background:rgba(255,82,82,0.1); padding:2px 6px; border-radius:4px; font-weight:bold;">X</b>
+                            </span>
+                        </div>`;
+                });
+            } else {
+                popupList.innerHTML = `<div style="text-align:center; color:#666; font-size:11px; padding:10px 0;">Belum ada pengeluaran terinput.</div>`;
+            }
+        });
+    }
+};
+
+// 2. Fungsi Menutup PopUp Pengeluaran & Bersihkan Inputan
+window.closePopUpPengeluaran = () => {
+    const m = document.getElementById('modal-pengeluaran-global');
+    if(m) m.style.display = 'none';
+    document.getElementById('ins-ops-ket').value = "";
+    document.getElementById('ins-ops-nom').value = "";
+};
+
+// --- REVISI FUNGSI SIMPAN PENGELUARAN (SUPPORT FORMAT KOMA) ---
+window.simpanPengeluaranBaru = async () => {
+    const ketInput = document.getElementById('ins-ops-ket').value.trim();
+    
+    // 🚀 MEMBERSIHKAN TANDA KOMA BERSIH-BERSIH SEBELUM MASUK DATABASE
+    const nomRawValue = document.getElementById('ins-ops-nom').value;
+    const nomInput = Number(nomRawValue.replace(/[^0-9]/g, '')) || 0;
+
+    if(!ketInput || nomInput <= 0) {
+        return alert("HARAP ISI RINCIAN KETERANGAN DAN NOMINAL DENGAN BENAR!");
+    }
+
+    try {
+        // Dorong data baru ke path operasional berdasarkan dbKey wilayah aktif
+        await push(ref(db, `bbs_operasional/${dbKey}`), {
+            ket: ketInput,
+            nom: nomInput // Yang disimpan ke database tetap angka murni (contoh: 150000) agar rumus PDF tidak rusak
+        });
+
+        // Bersihkan form setelah sukses input biar bisa ketik biaya lainnya
+        document.getElementById('ins-ops-ket').value = "";
+        document.getElementById('ins-ops-nom').value = "";
+        
+        // Update angka di dashboard utama (jika ada)
+        if(typeof hitungUang === "function") { hitungUang(0); }
+        
+    } catch (e) {
+        alert("Gagal menyimpan data pengeluaran: " + e.message);
+    }
+};
+
+// 4. Fungsi Koreksi/Hapus Pengeluaran Langsung dari Dalam PopUp
+window.delOpsPopup = async (keyItem) => {
+    if(confirm("Apakah Abang yakin ingin menghapus rincian biaya ini?")) {
+        try {
+            await remove(ref(db, `bbs_operasional/${dbKey}/${keyItem}`));
+            // Update kembali nominal dashboard utama setelah data terhapus
+            if(typeof hitungUang === "function") { hitungUang(0); }
+        } catch(e) {
+            alert("Gagal menghapus data: " + e.message);
+        }
+    }
+};
 
 window.generatePDF = async (item, jamBongkarPasti) => {
     // 1. Ambil data kalkulasi terbaru agar tidak ada nilai yang kosong
@@ -735,7 +870,7 @@ window.generatePDF = async (item, jamBongkarPasti) => {
 };
 
 // ============================================================================
-// --- GENERATE PDF KESELURUHAN + PILIHAN RESET DATA DI SINI (MASSAL) ---
+// --- GENERATE PDF KESELURUHAN + LOGIKA POTONG PENGELUARAN GLOBAL (MASSAL) ---
 // ============================================================================
 window.generatePDFKeseluruhan = async () => {
     const { jsPDF } = window.jspdf;
@@ -745,7 +880,7 @@ window.generatePDFKeseluruhan = async () => {
     document.getElementById('loader').style.display = 'flex';
 
     try {
-        // 1. Ambil data dari Firebase
+        // 1. Ambil data Pengiriman (Logs) dari Firebase
         const snapshot = await get(ref(db, `bbs_logs/${dbKey}`));
         if (!snapshot.exists()) {
             document.getElementById('loader').style.display = 'none';
@@ -756,7 +891,7 @@ window.generatePDFKeseluruhan = async () => {
         
         let akumulasiBop = 0;
         let akumulasiJual = 0;
-        let akumulasiProfit = 0;
+        let akumulasiProfitKotor = 0; // Mengganti nama agar lebih tepat sebagai profit kotor armada
         
         const bodyTableMassal = [];
         let no = 1;
@@ -774,7 +909,7 @@ window.generatePDFKeseluruhan = async () => {
 
             akumulasiBop += totalBop;
             akumulasiJual += hargaJual;
-            akumulasiProfit += marginProfit;
+            akumulasiProfitKotor += marginProfit;
 
             bodyTableMassal.push([
                 no++,
@@ -791,13 +926,25 @@ window.generatePDFKeseluruhan = async () => {
             ]);
         }
 
-        // 2. Desain Kop Laporan
+        // 🚀 2. TARIK DATA PENGELUARAN OPERASIONAL GLOBAL DARI FIREBASE
+        let totalPengeluaranGlobal = 0;
+        const snapOps = await get(ref(db, `bbs_operasional/${dbKey}`));
+        if (snapOps.exists()) {
+            Object.values(snapOps.val()).forEach(o => {
+                totalPengeluaranGlobal += Number(o.nom) || 0;
+            });
+        }
+
+        // 💰 RUMUS PENENTU: Profit Bersih Akhir setelah dikurangi pengeluaran mandor/solar global
+        const keuntunganBersihFinal = akumulasiProfitKotor - totalPengeluaranGlobal;
+
+        // 3. Desain Kop Laporan
         doc.setFontSize(16); doc.setFont("helvetica", "bold");
         doc.text("PT. BERKAH BAJA STEEL", 148, 14, { align: "center" });
         doc.setFontSize(10); doc.setFont("helvetica", "normal");
         doc.text("REKAPITULASI KESELURUHAN DATA PENGIRIMAN & LOGISTIK OPERASIONAL", 148, 20, { align: "center" });
         
-        // 3. Render Tabel Laporan Global
+        // 4. Render Tabel Laporan Global
         doc.autoTable({
             head: [['NO', 'TANGGAL', 'PLAT NO', 'SOPIR', 'PROJECT', 'BARANG', 'M / B (M3)', '+/-', 'TOTAL BOP', 'HARGA JUAL', 'PROFIT/MARGIN']],
             body: bodyTableMassal,
@@ -813,31 +960,45 @@ window.generatePDFKeseluruhan = async () => {
             }
         });
 
-        // 4. Blok Ringkasan Finansial Bawah
+        // 5. Blok Ringkasan Finansial Bawah (Disesuaikan Tinggi Barisnya)
         let totalY = doc.lastAutoTable.finalY + 12;
-        if (totalY > 170) { doc.addPage(); totalY = 20; }
+        if (totalY > 165) { doc.addPage(); totalY = 20; }
 
+        // Gambar Background Box Ringkasan (Tinggi diperbesar sedikit ke 32 agar muat 4 baris teks)
         doc.setFillColor(245, 247, 250);
-        doc.rect(14, totalY, 150, 26, "F"); 
+        doc.rect(14, totalY, 160, 32, "F"); 
         
         doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
         doc.text("RINGKASAN FINANSIAL KESELURUHAN :", 18, totalY + 6);
         
-        doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-        doc.text(`• TOTAL BIAYA BOP  :  Rp ${akumulasiBop.toLocaleString('id-ID')}`, 18, totalY + 12);
-        doc.text(`• TOTAL HARGA JUAL :  Rp ${akumulasiJual.toLocaleString('id-ID')}`, 18, totalY + 17);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(9);
         
-        if (akumulasiProfit >= 0) {
-            doc.setFillColor(46, 204, 113); doc.rect(14, totalY + 20, 150, 6, "F");
+        // Baris 1: BOP Armada
+        doc.text(`• TOTAL BIAYA BOP ARMADA`, 18, totalY + 12);
+        doc.text(`:   Rp ${akumulasiBop.toLocaleString('id-ID')}`, 65, totalY + 12);
+        
+        // Baris 2: Harga Jual
+        doc.text(`• TOTAL HARGA JUAL`, 18, totalY + 17);
+        doc.text(`:   Rp ${akumulasiJual.toLocaleString('id-ID')}`, 65, totalY + 17);
+        
+        // Baris 3: Pengeluaran Global
+        doc.text(`• TOTAL PENGELUARAN`, 18, totalY + 22);
+        doc.text(`:   Rp ${totalPengeluaranGlobal.toLocaleString('id-ID')} —`, 65, totalY + 22);
+        
+        // Warna Bar Penentu Sisa Profit Bersih Akhir
+        if (keuntunganBersihFinal >= 0) {
+            doc.setFillColor(46, 204, 113); doc.rect(14, totalY + 26, 160, 6, "F");
             doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold");
-            doc.text(`TOTAL PROFIT / KEUNTUNGAN BERSIH :  Rp ${akumulasiProfit.toLocaleString('id-ID')}`, 18, totalY + 24);
+            doc.text(`TOTAL PROFIT / KEUNTUNGAN BERSIH`, 18, totalY + 30);
+            doc.text(`:   Rp ${keuntunganBersihFinal.toLocaleString('id-ID')}`, 85, totalY + 30); // Disesuaikan agar muat setelah teks tebal
         } else {
-            doc.setFillColor(231, 76, 60); doc.rect(14, totalY + 20, 150, 6, "F");
+            doc.setFillColor(231, 76, 60); doc.rect(14, totalY + 26, 160, 6, "F");
             doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold");
-            doc.text(`TOTAL MARGIN SISA (RUGI/MINUS)     :  Rp ${akumulasiProfit.toLocaleString('id-ID')}`, 18, totalY + 24);
+            doc.text(`TOTAL MARGIN SISA (RUGI/MINUS)`, 18, totalY + 30);
+            doc.text(`:   Rp ${keuntunganBersihFinal.toLocaleString('id-ID')}`, 85, totalY + 30); // Disesuaikan agar muat setelah teks tebal
         }
 
-        // 5. TTD Manager Kantor
+        // 6. TTD Manager Kantor
         doc.setTextColor(0, 0, 0);
         doc.setFont("helvetica", "normal"); doc.setFontSize(10);
         doc.text("Hormat Kami,", 245, totalY + 6, { align: "center" });
@@ -848,14 +1009,14 @@ window.generatePDFKeseluruhan = async () => {
 
         const skrg = new Date();
         doc.setFontSize(7); doc.setFont("helvetica", "italic"); doc.setTextColor(150, 150, 150);
-        doc.text(`E-Laporan di-generate massal oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 33);
+        doc.text(`E-Laporan di-generate massal oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 38);
 
-        // 6. Eksekusi Download PDF Laporan Rekap Massal
+        // 7. Eksekusi Download PDF Laporan Rekap Massal
         doc.save(`LAPORAN_GLOBAL_PENGIRIMAN_PT_BBS.pdf`);
         
-        // 7. 🔥 DI SINI POP-UP PILIHAN RESET MUNCUL (HANYA SETELAH PDF GLOBAL SELESAI DI-DOWNLOAD)
+        // 8. POP-UP PILIHAN RESET MUNCUL (HANYA SETELAH PDF GLOBAL SELESAI DI-DOWNLOAD)
         setTimeout(async () => {
-            if (confirm("PROSES CETAK PDF MASSAL SELESAI!\nApakah Abang ingin sekalian mengosongkan/menghapus semua data pengiriman saat ini dari database Firebase PT. BBS?")) {
+            if (confirm("PROSES CETAK PDF MASSAL SELESAI!\nApakah Abang ingin sekalian mengosongkan/menghapus semua data pengiriman & pengeluaran saat ini dari database Firebase PT. BBS?")) {
                 await remove(ref(db, `bbs_logs/${dbKey}`));
                 await remove(ref(db, `bbs_operasional/${dbKey}`));
                 alert("DATABASE BERHASIL DIKOSONGKAN!");
@@ -937,6 +1098,19 @@ window.formatRupiahOtomatis = (element) => {
         element.value = Number(value).toLocaleString('en-US'); // Menggunakan 'en-US' agar pemisahnya berupa tanda koma (,)
     } else {
         element.value = "";
+    }
+};
+
+// --- FUNGSI OTOMATIS FORMAT RIBUAN SAAT DIKETIK ---
+window.formatInputRibuan = (inputan) => {
+    // 1. Ambil angka saja, buang karakter selain angka
+    let nilai = inputan.value.replace(/[^0-9]/g, '');
+    
+    // 2. Format jadi ribuan dengan pemisah koma (,)
+    if (nilai !== "") {
+        inputan.value = Number(nilai).toLocaleString('en-US'); // Pakai 'en-US' untuk koma (,), atau 'id-ID' jika ingin titik (.)
+    } else {
+        inputan.value = "";
     }
 };
     
