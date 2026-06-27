@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SURAT JALAN PT. BBS</title>
+    <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Poppins:wght@400;600&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
@@ -882,13 +883,19 @@ window.generatePDFKeseluruhan = async () => {
         
         let akumulasiBop = 0;
         let akumulasiJual = 0;
-        let akumulasiProfitKotor = 0; // Mengganti nama agar lebih tepat sebagai profit kotor armada
+        let akumulasiProfitKotor = 0; 
         
         const bodyTableMassal = [];
         let no = 1;
 
         for (let key in dataLogs) {
             const item = dataLogs[key];
+            
+            // 🚀 GERBANG PENYARING STATUS 'DONE'
+            const statusMobil = (item.status || "").toUpperCase();
+            if (statusMobil !== 'DONE') {
+                continue; 
+            }
             
             const vMuat = Number(item.volM) || 0;
             const vBongkar = Number(item.volB) || 0;
@@ -917,25 +924,39 @@ window.generatePDFKeseluruhan = async () => {
             ]);
         }
 
-        // 🚀 2. TARIK DATA PENGELUARAN OPERASIONAL GLOBAL DARI FIREBASE
+        // 🚀 2. AMBIL DATA PENGELUARAN OPERASIONAL GLOBAL DARI FIREBASE
         let totalPengeluaranGlobal = 0;
+        const bodyTableOps = []; 
+        let noOps = 1;
+
         const snapOps = await get(ref(db, `bbs_operasional/${dbKey}`));
         if (snapOps.exists()) {
-            Object.values(snapOps.val()).forEach(o => {
-                totalPengeluaranGlobal += Number(o.nom) || 0;
+            Object.keys(snapOps.val()).forEach(k => {
+                const o = snapOps.val()[k];
+                const nominalOps = Number(o.nom) || 0;
+                totalPengeluaranGlobal += nominalOps;
+
+                // 🚀 DIKIRIM TERPISAH: No, Keterangan, Teks "Rp", baru Angka Nominalnya
+                bodyTableOps.push([
+                    noOps++,
+                    (o.ket || '-').toUpperCase(), 
+                    "Rp",
+                    nominalOps.toLocaleString('id-ID')
+                ]);
             });
         }
 
-        // 💰 RUMUS PENENTU: Profit Bersih Akhir setelah dikurangi pengeluaran mandor/solar global
-        const keuntunganBersihFinal = akumulasiProfitKotor - totalPengeluaranGlobal;
+        // 🚀 3. HITUNGAN POTONGAN 10% PERUSAHAAN
+        const potonganPerusahaan = akumulasiProfitKotor > 0 ? Math.round(akumulasiProfitKotor * 0.10) : 0;
+        const keuntunganBersihFinal = akumulasiProfitKotor - potonganPerusahaan - totalPengeluaranGlobal;
 
-        // 3. Desain Kop Laporan
+        // 4. Desain Kop Laporan
         doc.setFontSize(16); doc.setFont("helvetica", "bold");
         doc.text("PT. BERKAH BAJA STEEL", 148, 14, { align: "center" });
         doc.setFontSize(10); doc.setFont("helvetica", "normal");
         doc.text("REKAPITULASI KESELURUHAN DATA PENGIRIMAN & BIAYA OPERASIONAL", 148, 20, { align: "center" });
         
-        // 4. Render Tabel Laporan Global
+        // 5. Render Tabel Laporan Global (Hanya yang DONE)
         doc.autoTable({
             head: [['NO', 'TANGGAL', 'PLAT NO', 'SOPIR', 'PROJECT', 'BARANG', 'M / B (M3)', '+/-', 'TOTAL BOP', 'HARGA JUAL', 'PROFIT/MARGIN']],
             body: bodyTableMassal,
@@ -951,66 +972,127 @@ window.generatePDFKeseluruhan = async () => {
             }
         });
 
-        // 5. Blok Ringkasan Finansial Bawah (Disesuaikan Tinggi Barisnya)
-        let totalY = doc.lastAutoTable.finalY + 12;
-        if (totalY > 165) { doc.addPage(); totalY = 20; }
+   // 🚀 6. RENDER TABEL RINCIAN PENGELUARAN BARU (STRUKTUR AKUNTANSI PARIPURNA)
+        let opsY = doc.lastAutoTable.finalY + 8;
+        if (opsY > 155) { doc.addPage(); opsY = 20; }
+        
+        doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
+        doc.text("RINCIAN BIAYA OPERASIONAL GLOBAL (POTONGAN PROFIT):", 14, opsY);
 
-        // Gambar Background Box Ringkasan (Tinggi diperbesar sedikit ke 32 agar muat 4 baris teks)
+        doc.autoTable({
+            // 🚀 Judul kolom nominal digabung lewat colspan di bagian pengaturan bawah nanti
+            head: [['NO', 'RINCIAN / KETERANGAN BIAYA OPERASIONAL', 'NOMINAL (RUPIAH)', '']],
+            body: bodyTableOps.length > 0 ? bodyTableOps : [['-', 'BELUM ADA PENGELUARAN TERINPUT', 'Rp', '0']],
+            startY: opsY + 3,
+            theme: 'striped',
+            margin: { left: 14 },
+            styles: { fontSize: 8, cellPadding: 2 },
+            headStyles: { fillColor: [192, 57, 43], fontStyle: 'bold', halign: 'center' }, 
+            columnStyles: {
+                0: { cellWidth: 15, halign: 'center' }, 
+                1: { cellWidth: 100, halign: 'left' }, 
+                2: { cellWidth: 12, halign: 'left', fontStyle: 'normal' }, // 🚀 Kolom "Rp" mepet kiri
+                3: { cellWidth: 38, halign: 'right' }                       // 🚀 Kolom Angka mepet kanan
+            },
+            // Jurus menyatukan dua kolom judul teratas (NOMINAL RUPIAH) agar terlihat rapi jadi satu kotak besar
+            didParseCell: function(data) {
+                if (data.cell.section === 'head' && data.column.index === 2) {
+                    data.cell.colSpan = 2;
+                }
+            }
+        });
+
+    // 7. Blok Ringkasan Finansial Bawah
+        let totalY = doc.lastAutoTable.finalY + 10;
+        if (totalY > 155) { doc.addPage(); totalY = 20; }
+
+        // Gambar Kotak Background Abu-abu Tipis
         doc.setFillColor(245, 247, 250);
-        doc.rect(14, totalY, 160, 32, "F"); 
+        doc.rect(14, totalY, 165, 38, "F"); 
         
         doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
         doc.text("RINGKASAN FINANSIAL KESELURUHAN :", 18, totalY + 6);
         
-      doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+        doc.setFont("helvetica", "normal"); doc.setFontSize(9);
         
-        // Baris 1: BOP Armada
+        // --- BARIS 1 & 2 (WARNA HITAM) ---
+        doc.setTextColor(0, 0, 0);
         doc.text(`• TOTAL BIAYA BOP ARMADA`, 18, totalY + 12);
-        doc.text(`:   Rp ${akumulasiBop.toLocaleString('id-ID')}`, 65, totalY + 12);
+        doc.text(`:`, 74, totalY + 12);
+        doc.text(`Rp`, 78, totalY + 12); doc.text(`${akumulasiBop.toLocaleString('id-ID')}`, 125, totalY + 12, { align: "right" });
         
-        // Baris 2: Harga Jual
         doc.text(`• TOTAL HARGA JUAL`, 18, totalY + 17);
-        doc.text(`:   Rp ${akumulasiJual.toLocaleString('id-ID')}`, 65, totalY + 17);
+        doc.text(`:`, 74, totalY + 17);
+        doc.text(`Rp`, 78, totalY + 17); doc.text(`${akumulasiJual.toLocaleString('id-ID')}`, 125, totalY + 17, { align: "right" });
         
-        // Baris 3: Pengeluaran Global
-        doc.text(`• TOTAL PENGELUARAN`, 18, totalY + 22);
-        doc.text(`:   Rp ${totalPengeluaranGlobal.toLocaleString('id-ID')} —`, 65, totalY + 22);
+        // --- BARIS 3: POTONGAN PERUSAHAAN 10% (🚀 DIUBAH JADI WARNA HIJAU) ---
+        doc.setTextColor(46, 204, 113); // Set warna hijau
+        doc.text(`• POTONGAN PERUSAHAAN (10%)`, 18, totalY + 22);
+        doc.text(`:`, 74, totalY + 22);
+        doc.text(`Rp`, 78, totalY + 22); doc.text(`${potonganPerusahaan.toLocaleString('id-ID')}`, 125, totalY + 22, { align: "right" });
         
-        // Warna Bar Penentu Sisa Profit Bersih Akhir
-        if (keuntunganBersihFinal >= 0) {
-            doc.setFillColor(46, 204, 113); doc.rect(14, totalY + 26, 160, 6, "F");
-            doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold");
-            doc.text(`TOTAL PROFIT / KEUNTUNGAN BERSIH`, 18, totalY + 30);
-            doc.text(`:   Rp ${keuntunganBersihFinal.toLocaleString('id-ID')}`, 85, totalY + 30); // Disesuaikan agar muat setelah teks tebal
-        } else {
-            doc.setFillColor(231, 76, 60); doc.rect(14, totalY + 26, 160, 6, "F");
-            doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold");
-            doc.text(`TOTAL MARGIN SISA (RUGI/MINUS)`, 18, totalY + 30);
-            doc.text(`:   Rp ${keuntunganBersihFinal.toLocaleString('id-ID')}`, 85, totalY + 30); // Disesuaikan agar muat setelah teks tebal
-        }
+        // --- BARIS 4: TOTAL PENGELUARAN (KEMBALI KE WARNA HITAM) ---
+        doc.setTextColor(0, 0, 0); // Kembalikan ke hitam murni
+        doc.text(`• TOTAL PENGELUARAN GLOBAL`, 18, totalY + 27);
+        doc.text(`:`, 74, totalY + 27);
+        doc.text(`Rp`, 78, totalY + 27); doc.text(`${totalPengeluaranGlobal.toLocaleString('id-ID')}`, 125, totalY + 27, { align: "right" });
+        doc.text(`(Kas/Ops)`, 128, totalY + 27);
 
-        // 6. TTD Manager Kantor
+        // 🚀 BARIS TOTAL PROFIT BERSIH AKHIR
+        doc.setFont("helvetica", "bold");
+        if (keuntunganBersihFinal >= 0) {
+            doc.setTextColor(46, 204, 113); // Font Warna Hijau Sukses
+            doc.text(`TOTAL PROFIT / KEUNTUNGAN BERSIH`, 18, totalY + 34);
+            doc.text(`:`, 74, totalY + 34);
+            doc.text(`Rp`, 78, totalY + 34); 
+            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 34, { align: "right" });
+        } else {
+            doc.setTextColor(231, 76, 60); // Font Warna Merah Minus
+            doc.text(`TOTAL MARGIN SISA (RUGI/MINUS)`, 18, totalY + 34);
+            doc.text(`:`, 74, totalY + 34);
+            doc.text(`Rp`, 78, totalY + 34); 
+            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 34, { align: "right" });
+        }
+        // 8. TTD Manager Kantor (Kembalikan warna teks ke Hitam murni)
+        // 8. TTD Manager Kantor (Kembalikan warna teks ke Hitam murni)
         doc.setTextColor(0, 0, 0);
         doc.setFont("helvetica", "normal"); doc.setFontSize(10);
         doc.text("Hormat Kami,", 245, totalY + 6, { align: "center" });
+        
+        // 🚀 NAMA ABANG DITURUNKAN: Dari totalY + 20 kita mundurkan ke totalY + 28 (Biar gak mepet)
         doc.setFont("helvetica", "bold");
-        doc.text("YEFRY DESFIRMANZA", 245, totalY + 20, { align: "center", underline: true });
+        doc.text("YEFRY DESFIRMANZA", 245, totalY + 28, { align: "center", underline: true });
+        
+        // JABATAN DITURUNKAN: Mengikuti nama Abang, diset ke totalY + 32
         doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-        doc.text("MANAGER PT. BBS", 245, totalY + 24, { align: "center" });
+        doc.text("MANAGER PT. BBS", 245, totalY + 32, { align: "center" });
 
         const skrg = new Date();
         doc.setFontSize(7); doc.setFont("helvetica", "italic"); doc.setTextColor(150, 150, 150);
-        doc.text(`E-Laporan di-generate massal oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 38);
+        doc.text(`E-Laporan dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 44);
 
-        // 7. Eksekusi Download PDF Laporan Rekap Massal
+        // 9. Eksekusi Download PDF Laporan Rekap Massal
         doc.save(`LAPORAN_GLOBAL_PENGIRIMAN_PT_BBS.pdf`);
         
-        // 8. POP-UP PILIHAN RESET MUNCUL (HANYA SETELAH PDF GLOBAL SELESAI DI-DOWNLOAD)
+      // 10. POP-UP PILIHAN RESET MUNCUL (VERSI SHARING PROFIT PT. BBS - AMAN & AKURAT)
         setTimeout(async () => {
-            if (confirm("PROSES CETAK PDF MASSAL SELESAI!\nApakah Abang ingin sekalian mengosongkan/menghapus semua data pengiriman & pengeluaran saat ini dari database Firebase PT. BBS?")) {
-                await remove(ref(db, `bbs_logs/${dbKey}`));
+            if (confirm("PROSES CETAK PDF MASSAL SELESAI!\nApakah Abang ingin sekalian melakukan RESET DATA untuk periode ini?")) {
+                
+                // 🚀 PROSES SELEKSI: Hapus data armada yang DONE saja dari kamar logs
+                for (let key in dataLogs) {
+                    const item = dataLogs[key];
+                    const statusMobil = (item.status || "").toUpperCase();
+                    
+                    if (statusMobil === 'DONE') {
+                        // Hanya hapus armada ini jika statusnya benar-benar DONE
+                        await remove(ref(db, `bbs_logs/${dbKey}/${key}`));
+                    }
+                }
+
+                // 🚀 SE SEKALI SABET: Hapus seluruh kamar operasional global karena sudah dilaporkan di PDF
                 await remove(ref(db, `bbs_operasional/${dbKey}`));
-                alert("DATABASE BERHASIL DIKOSONGKAN!");
+                
+                alert("RESET SELESAI!\nData pengiriman (DONE) & seluruh biaya pengeluaran operasional global telah DISAPU BERSIH.\nData armada yang masih OTW tetap aman terpajang di dashboard.");
                 location.reload();
             }
         }, 1000);
