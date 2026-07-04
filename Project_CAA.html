@@ -210,7 +210,7 @@
     const dbKey = "Project CAA";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyZhTJrSLlzeV8DyC1NcZciJyUrTLzMff5UahkTpZcDuF6PPX2o4E9Pc2K_guOhMjEh/exec";
 
-       const mode = new URLSearchParams(window.location.search).get('mode');
+    const mode = new URLSearchParams(window.location.search).get('mode');
     if(mode === 'cilegon') document.getElementById('view-cilegon').style.display = 'flex';
     else if(mode === 'jakarta') {
         document.getElementById('view-jakarta').style.display = 'flex';
@@ -270,7 +270,7 @@
 
     // Format angka menjadi 3 digit (contoh: 1 -> 001, 15 -> 015)
     const stringNoUrut = String(nomorUrut).padStart(3, '0');
-    const noSuratJalan = `${stringNoUrut}/kts-nas-bbs/${romawiBulan}/${tahun}`;
+    const noSuratJalan = `${stringNoUrut}/kpp-nas-bbs/${romawiBulan}/${tahun}`;
     // =================================================================================================================
 
     const printArea = document.createElement('div');
