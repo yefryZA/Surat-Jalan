@@ -213,7 +213,7 @@
     const mode = new URLSearchParams(window.location.search).get('mode');
     if(mode === 'muat') document.getElementById('view-muat').style.display = 'flex';
     else if(mode === 'bongkar') {
-        document.getElementById('view-muat').style.display = 'flex';
+        document.getElementById('view-bongkar').style.display = 'flex';
         initScanner();
     }
     else document.getElementById('view-dashboard').style.display = 'flex';
