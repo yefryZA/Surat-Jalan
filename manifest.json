@@ -1,7 +1,7 @@
 {
   "id": "https://yefryza.github.io/Surat_Jalan_BBS/index.html",
-  "name": "Surat Jalan BBS",
-  "short_name": "SJL BBS",
+  "name": "View Truck",
+  "short_name": "View BBS",
   "description": "Sistem Manajemen Surat Jalan & Biaya BOP PT. Berkah Baja Steel",
   "start_url": "index.html",
   "scope": "./",
