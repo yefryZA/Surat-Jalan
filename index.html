@@ -5,16 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SURAT JALAN PT. BBS</title>
     
-    <script>
+<script>
         const urlParams = new URLSearchParams(window.location.search);
-        let manifestFile = 'manifest.json'; // Default untuk Admin
+        const currentMode = urlParams.get('mode');
+        let manifestFile = 'manifest.json'; // Default Admin
 
-        // Jika mode cilegon, ganti nama file manifestnya
-        if (urlParams.get('mode') === 'cilegon') {
+        if (currentMode === 'cilegon') {
             manifestFile = 'manifest_cker.json';
+            
+            // Manipulasi URL agar browser menganggap ini aplikasi terpisah
+            if (!window.location.hash.includes('ceker-app')) {
+                window.history.replaceState(null, '', './?mode=cilegon#ceker-app');
+            }
         }
 
-        // Buat elemen <link rel="manifest"> secara dinamis lewat kode
+        // Tembakkan manifest ke HTML secara instan
         const link = document.createElement('link');
         link.rel = 'manifest';
         link.href = manifestFile;
@@ -261,7 +266,7 @@
     const dbKey = "Surat Jalan";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyZhTJrSLlzeV8DyC1NcZciJyUrTLzMff5UahkTpZcDuF6PPX2o4E9Pc2K_guOhMjEh/exec";
 
-    const mode = new URLSearchParams(window.location.search).get('mode');
+   
     if(mode === 'cilegon') {
         document.getElementById('view-cilegon').style.display = 'flex';
     } 
