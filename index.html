@@ -5,13 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SURAT JALAN PT. BBS</title>
     
-    <link id="pwa-manifest" rel="manifest" href="manifest.json">
-    
     <script>
         const urlParams = new URLSearchParams(window.location.search);
+        let manifestFile = 'manifest.json'; // Default untuk Admin
+
+        // Jika mode cilegon, ganti nama file manifestnya
         if (urlParams.get('mode') === 'cilegon') {
-            document.getElementById('pwa-manifest').setAttribute('href', 'manifest_cker.json');
+            manifestFile = 'manifest_cker.json';
         }
+
+        // Buat elemen <link rel="manifest"> secara dinamis lewat kode
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = manifestFile;
+        document.head.appendChild(link);
     </script>
 
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Poppins:wght@400;600&family=Orbitron:wght@700&display=swap" rel="stylesheet">
