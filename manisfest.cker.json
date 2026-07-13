@@ -13,7 +13,13 @@
       "src": "https://raw.githubusercontent.com/yefryZA/PT.BBS/main/logo.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/yefryZA/PT.BBS/main/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "screenshots": [
@@ -33,4 +39,3 @@
     }
   ]
 }
-
