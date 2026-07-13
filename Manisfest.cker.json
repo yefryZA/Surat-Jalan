@@ -1,0 +1,36 @@
+{
+  "id": "/Surat-Jalan/?mode=cilegon",
+  "name": "Surat Jalan Cilegon",
+  "short_name": "SJL Cilegon",
+  "description": "Sistem Manajemen Surat Jalan - Mode Cilegon",
+  "start_url": "/Surat-Jalan/index.html?mode=cilegon",
+  "scope": "/Surat-Jalan/",
+  "display": "standalone",
+  "background_color": "#0a192f",
+  "theme_color": "#0a192f",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/yefryZA/PT.BBS/main/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://raw.githubusercontent.com/yefryZA/PT.BBS/main/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Tampilan Desktop Surat Jalan Cilegon"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/yefryZA/PT.BBS/main/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Tampilan Mobile Surat Jalan Cilegon"
+    }
+  ]
+}
+
