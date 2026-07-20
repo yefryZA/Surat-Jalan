@@ -1026,7 +1026,7 @@ window.generatePDFKeseluruhan = async () => {
         
         // --- BARIS 3: POTONGAN PERUSAHAAN 10% (🚀 DIUBAH JADI WARNA HIJAU) ---
         doc.setTextColor(46, 204, 113); // Set warna hijau
-        doc.text(`• POTONGAN PERUSAHAAN (0 %)`, 18, totalY + 22);
+        doc.text(`• ROYALTI PERUSAHAAN (10 %)`, 18, totalY + 22);
         doc.text(`:`, 74, totalY + 22);
         doc.text(`Rp`, 78, totalY + 22); doc.text(`${potonganPerusahaan.toLocaleString('id-ID')}`, 125, totalY + 22, { align: "right" });
         
@@ -1047,7 +1047,7 @@ window.generatePDFKeseluruhan = async () => {
             doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 34, { align: "right" });
         } else {
             doc.setTextColor(231, 76, 60); // Font Warna Merah Minus
-            doc.text(`TOTAL MARGIN SISA (RUGI/MINUS)`, 18, totalY + 34);
+            doc.text(`TOTAL MARGIN SISA (PLUS/MINUS)`, 18, totalY + 34);
             doc.text(`:`, 74, totalY + 34);
             doc.text(`Rp`, 78, totalY + 34); 
             doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 34, { align: "right" });
