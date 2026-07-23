@@ -751,7 +751,6 @@ window.openPopUpPengeluaran = async () => {
     if(m) {
         m.style.display = 'block';
         
-        // Memasang listener onValue khusus untuk merender list di dalam PopUp secara real-time
         onValue(ref(db, `bbs_operasional/${dbKey}`), (snap) => {
             const popupList = document.getElementById('ops-list-popup');
             if(!popupList) return;
@@ -764,7 +763,10 @@ window.openPopUpPengeluaran = async () => {
                     const o = dataOps[k];
                     popupList.innerHTML += `
                         <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding: 6px 0; border-bottom: 1px solid #222; font-family: 'Poppins', sans-serif;">
-                            <span style="color:#ddd;">- ${o.ket}</span>
+                            <span style="color:#ddd;">
+                                <small style="color:#aaa; margin-right:5px;">[${o.tgl || '-'}]</small> 
+                                ${o.ket}
+                            </span>
                             <span style="color: #ff7675; font-weight:bold;">
                                 RP ${Number(o.nom).toLocaleString('id-ID')} 
                                 <b onclick="window.delOpsPopup('${k}')" style="color:#ff5252; cursor:pointer; margin-left:10px; background:rgba(255,82,82,0.1); padding:2px 6px; border-radius:4px; font-weight:bold;">X</b>
@@ -790,7 +792,6 @@ window.closePopUpPengeluaran = () => {
 window.simpanPengeluaranBaru = async () => {
     const ketInput = document.getElementById('ins-ops-ket').value.trim();
     
-    // 🚀 MEMBERSIHKAN TANDA KOMA BERSIH-BERSIH SEBELUM MASUK DATABASE
     const nomRawValue = document.getElementById('ins-ops-nom').value;
     const nomInput = Number(nomRawValue.replace(/[^0-9]/g, '')) || 0;
 
@@ -798,18 +799,20 @@ window.simpanPengeluaranBaru = async () => {
         return alert("HARAP ISI RINCIAN KETERANGAN DAN NOMINAL DENGAN BENAR!");
     }
 
+    // 🚀 Opsi A: Tanggal Otomatis Hari Ini (Format: DD/MM/YYYY)
+    const today = new Date();
+    const tglInput = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+
     try {
-        // Dorong data baru ke path operasional berdasarkan dbKey wilayah aktif
         await push(ref(db, `bbs_operasional/${dbKey}`), {
+            tgl: tglInput, // 👈 SIMPAN TANGGAL OTOMATIS KE FIREBASE
             ket: ketInput,
-            nom: nomInput // Yang disimpan ke database tetap angka murni (contoh: 150000) agar rumus PDF tidak rusak
+            nom: nomInput
         });
 
-        // Bersihkan form setelah sukses input biar bisa ketik biaya lainnya
         document.getElementById('ins-ops-ket').value = "";
         document.getElementById('ins-ops-nom').value = "";
         
-        // Update angka di dashboard utama (jika ada)
         if(typeof hitungUang === "function") { hitungUang(0); }
         
     } catch (e) {
@@ -937,14 +940,15 @@ window.generatePDFKeseluruhan = async () => {
                 totalPengeluaranGlobal += nominalOps;
 
                 // 🚀 DIKIRIM TERPISAH: No, Keterangan, Teks "Rp", baru Angka Nominalnya
-                bodyTableOps.push([
-                    noOps++,
-                    (o.ket || '-').toUpperCase(), 
-                    "Rp",
-                    nominalOps.toLocaleString('id-ID')
-                ]);
-            });
-        }
+        bodyTableOps.push([
+    noOps++,
+    o.tgl || '-', 
+    (o.ket || '-').toUpperCase(), 
+    "Rp",
+    nominalOps.toLocaleString('id-ID')
+]);
+    });
+}
 
         // 🚀 3. HITUNGAN POTONGAN 10% PERUSAHAAN
         const potonganPerusahaan = akumulasiProfitKotor > 0 ? Math.round(akumulasiProfitKotor * 0.10) : 0;
@@ -973,34 +977,36 @@ window.generatePDFKeseluruhan = async () => {
         });
 
    // 🚀 6. RENDER TABEL RINCIAN PENGELUARAN BARU (STRUKTUR AKUNTANSI PARIPURNA)
-        let opsY = doc.lastAutoTable.finalY + 8;
-        if (opsY > 155) { doc.addPage(); opsY = 20; }
-        
-        doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
-        doc.text("RINCIAN BIAYA OPERASIONAL GLOBAL (POTONGAN PROFIT):", 14, opsY);
+    let opsY = doc.lastAutoTable.finalY + 8;
+    if (opsY > 155) { doc.addPage(); opsY = 20; }
+    
+    doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
+    doc.text("RINCIAN BIAYA OPERASIONAL GLOBAL (POTONGAN PROFIT):", 14, opsY);
 
-        doc.autoTable({
-            // 🚀 Judul kolom nominal digabung lewat colspan di bagian pengaturan bawah nanti
-            head: [['NO', 'RINCIAN / KETERANGAN BIAYA OPERASIONAL', 'NOMINAL (RUPIAH)', '']],
-            body: bodyTableOps.length > 0 ? bodyTableOps : [['-', 'BELUM ADA PENGELUARAN TERINPUT', 'Rp', '0']],
-            startY: opsY + 3,
-            theme: 'striped',
-            margin: { left: 14 },
-            styles: { fontSize: 8, cellPadding: 2 },
-            headStyles: { fillColor: [192, 57, 43], fontStyle: 'bold', halign: 'center' }, 
-            columnStyles: {
-                0: { cellWidth: 15, halign: 'center' }, 
-                1: { cellWidth: 100, halign: 'left' }, 
-                2: { cellWidth: 12, halign: 'left', fontStyle: 'normal' }, // 🚀 Kolom "Rp" mepet kiri
-                3: { cellWidth: 38, halign: 'right' }                       // 🚀 Kolom Angka mepet kanan
-            },
-            // Jurus menyatukan dua kolom judul teratas (NOMINAL RUPIAH) agar terlihat rapi jadi satu kotak besar
-            didParseCell: function(data) {
-                if (data.cell.section === 'head' && data.column.index === 2) {
-                    data.cell.colSpan = 2;
-                }
+    doc.autoTable({
+        // 1. Ditambahkan header 'TANGGAL' di posisi kolom ke-2
+        head: [['NO', 'TANGGAL', 'RINCIAN / KETERANGAN BIAYA OPERASIONAL', 'NOMINAL (RUPIAH)', '']],
+        // 2. Format fallback jika data kosong disesuaikan jumlah kolomnya (5 kolom)
+        body: bodyTableOps.length > 0 ? bodyTableOps : [['-', '-', 'BELUM ADA PENGELUARAN TERINPUT', 'Rp', '0']],
+        startY: opsY + 3,
+        theme: 'striped',
+        margin: { left: 14 },
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [192, 57, 43], fontStyle: 'bold', halign: 'center' }, 
+        columnStyles: {
+            0: { cellWidth: 12, halign: 'center' },                      // Kolom NO
+            1: { cellWidth: 25, halign: 'center' },                      // 🚀 Kolom TANGGAL baru
+            2: { cellWidth: 90, halign: 'left' },                        // Kolom RINCIAN
+            3: { cellWidth: 12, halign: 'left', fontStyle: 'normal' },   // Kolom "Rp"
+            4: { cellWidth: 36, halign: 'right' }                        // Kolom Angka Nominal
+        },
+        // 3. Colspan untuk header NOMINAL digeser ke index kolom ke-3
+        didParseCell: function(data) {
+            if (data.cell.section === 'head' && data.column.index === 3) {
+                data.cell.colSpan = 2;
             }
-        });
+        }
+    });
 
     // 7. Blok Ringkasan Finansial Bawah
         let totalY = doc.lastAutoTable.finalY + 10;
