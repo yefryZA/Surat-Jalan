@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SURAT JALAN PT. BBS</title>
+    <title>SURAT JALAN UNTUK PT. C_H_M</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Poppins:wght@400;600&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
@@ -142,54 +142,46 @@
 
     <!-- MODE INPUT CEKER (DENGAN INPUT TAMBAHAN PROJECT) -->
    <div id="view-cilegon" class="container">
-        <div class="card">
-            <h2 style="color:var(--green)">INPUT MUAT</h2>
-            
-            <label class="lbl">DATA KENDARAAN & DRIVER</label>
-            <input type="text" id="m-plat" placeholder="PLAT NOMOR (Cth: A 1234 BB)">
-            <input type="text" id="m-sopir" placeholder="NAMA SOPIR">
-            
-            <label class="lbl">PROJECT TUJUAN</label>
-            <input type="text" id="m-project" placeholder="NAMA PROJECT TUJUAN">
-            
-            <label class="lbl">DETAIL MUATAN</label>
-            <input type="text" id="m-barang" placeholder="NAMA BARANG (Cth: PASIR RANGKAS)">
+    <div class="card">
+        <h2 style="color:var(--green)">INPUT MUAT</h2>
+        
+        <label class="lbl">DATA KENDARAAN & DRIVER</label>
+        <input type="text" id="m-plat" placeholder="PLAT NOMOR" style="font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 16px; color: #ffffff;">
+        <input type="text" id="m-sopir" placeholder="SOPIR" style="font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 16px; color: #ffffff;">
+        
+        <label class="lbl">PROJECT TUJUAN</label>
+        <input type="text" id="m-project" placeholder="PROJECT" style="font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 16px; color: #ffffff;">
+        
+        <label class="lbl">DETAIL MUATAN</label>
+        <input type="text" id="m-barang" placeholder="MUATAN" style="font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 16px; color: #ffffff;">
 
-            <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <input type="number" id="m-p" placeholder="P (m)" step="0.01" style="flex:1; padding:12px; border-radius:8px; border:1px solid #444; background:#1a1a1a; color:white;">
-                <input type="number" id="m-l" placeholder="L (m)" step="0.01" style="flex:1; padding:12px; border-radius:8px; border:1px solid #444; background:#1a1a1a; color:white;">
-                <input type="number" id="m-t" placeholder="T (m)" step="0.01" style="flex:1; padding:12px; border-radius:8px; border:1px solid #444; background:#1a1a1a; color:white;">
-            </div>
+        <!-- P, L, T Dibuat Tebal & Kontras -->
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <input type="number" id="m-p" placeholder="P (m)" step="0.01" style="flex:1; padding:12px; border-radius:8px; border:1px solid #666; background:#1a1a1a; color:#ffffff; font-family:'Arial Black', sans-serif; font-weight:900; font-size:16px;">
+            <input type="number" id="m-l" placeholder="L (m)" step="0.01" style="flex:1; padding:12px; border-radius:8px; border:1px solid #666; background:#1a1a1a; color:#ffffff; font-family:'Arial Black', sans-serif; font-weight:900; font-size:16px;">
+            <input type="number" id="m-t" placeholder="T (m)" step="0.01" style="flex:1; padding:12px; border-radius:8px; border:1px solid #666; background:#1a1a1a; color:#ffffff; font-family:'Arial Black', sans-serif; font-weight:900; font-size:16px;">
+        </div>
 
-            <input type="number" id="m-vol" placeholder="TOTAL VOLUME (M3)" step="0.01" readonly style="background:#222; color:var(--gold); font-weight:bold; border:1px dashed var(--gold);">
-            
-            <label class="lbl">FOTO MUATAN (RATA/MUNJUNG)</label>
-            <input type="file" capture="camera" id="m-foto">
-            
-            <label class="lbl">FOTO KTP</label>
-            <input type="file" capture="camera" id="m-ktp">
-            
-           <label class="lbl" style="color:var(--gold); font-weight:bold;">⚙️ BIAYA BOP: HARGA MATERIAL (RP)</label>
-            <input type="text" id="m-ops-material" inputmode="numeric" pattern="[0-9]*" placeholder="CONTOH: 700.000" style="border: 1px solid var(--gold);" oninput="formatRupiahOtomatis(this)">
-            
-            <label class="lbl" style="color:var(--gold); font-weight:bold;">⚙️ BIAYA BOP: ONGKOS TRUK (RP)</label>
-            <input type="text" id="m-ops-mobil" inputmode="numeric" pattern="[0-9]*" placeholder="CONTOH: 300.000" style="border: 1px solid var(--gold); margin-bottom:20px;" oninput="formatRupiahOtomatis(this)">
+        <!-- TOTAL VOLUME: Dibuat Kuning Cerah & Lebih Besar -->
+        <input type="number" id="m-vol" placeholder="TOTAL VOLUME (M3)" step="0.01" readonly style="background:#222; color:#ffd700; font-family:'Arial Black', sans-serif; font-weight:900; font-size:18px; border:2px dashed #ffd700;">
+        
+        <label class="lbl">FOTO MUATAN</label>
+        <input type="file" capture="camera" id="m-foto">
+        
+        <label class="lbl">FOTO KTP</label>
+        <input type="file" capture="camera" id="m-ktp">
+        
+        <!-- HARGA MATERIAL: Font Arial Black Cerah -->
+        <label class="lbl" style="color:var(--gold); font-weight:bold;">⚙️ HARGA MATERIAL (RP)</label>
+        <input type="text" id="m-ops-material" inputmode="numeric" pattern="[0-9]*" placeholder="0.00" style="border: 1px solid var(--gold); font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88; background: #111;" oninput="formatRupiahOtomatis(this)">
+        
+        <!-- ONGKOS TRUK: Font Arial Black Cerah -->
+        <label class="lbl" style="color:var(--gold); font-weight:bold;">⚙️ ONGKOS TRUK (RP)</label>
+        <input type="text" id="m-ops-mobil" inputmode="numeric" pattern="[0-9]*" placeholder="0.00" style="border: 1px solid var(--gold); margin-bottom:20px; font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88; background: #111;" oninput="formatRupiahOtomatis(this)">
 
-            <button class="btn btn-green" onclick="prosesMuat()">SIMPAN & CETAK SURAT JALAN</button>
+        <button class="btn btn-green" onclick="prosesMuat()" style="font-family: 'Arial Black', sans-serif; font-size: 16px;">CETAK SURAT JALAN</button>
             
             <div id="qr-canvas"></div>
-        </div>
-    </div>
-
-    <!-- PANEL UTAMA SETTING HARGA -->
-    <div id="modal-admin" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:1000; padding:20px;">
-        <div class="card" style="max-width:400px; margin:auto;">
-            <h3 style="color:var(--gold)">ADMIN PANEL</h3>
-            <label class="lbl">HARGA BELI /M3</label><input type="number" id="cfg-beli">
-            <label class="lbl">HARGA JUAL /M3</label><input type="number" id="cfg-jual">
-            <button class="btn btn-green" onclick="saveSettings()">SIMPAN HARGA</button>
-            <button class="btn" style="background:var(--red); color:#fff; margin-top:20px;" onclick="resetBBS()">RESET TOTAL DATA</button>
-            <button class="btn" style="background:none; color:#8892B0" onclick="closeAdmin()">TUTUP</button>
         </div>
     </div>
 
@@ -224,7 +216,7 @@
         </div>
 
         <div style="border-top: 1px solid #333; padding-top: 15px;">
-            <h4 style="margin: 0 0 10px 0; font-size: 12px; color: #00e5ff; font-weight: 600;">Daftar Pengeluaran Aktif:</h4>
+            <h4 style="margin: 0 0 10px 0; font-size: 12px; color: #00e5ff; font-weight: 600;">Rincian Pengeluaran:</h4>
             
             <div id="ops-list-popup" style="max-height: 180px; overflow-y: auto; background: #0f0f0f; padding: 10px; border-radius: 6px; border: 1px solid #222;">
                 </div>
@@ -401,7 +393,7 @@ async function printSuratJalan(data) {
                 </tr>
                 <tr>
                     <td>( _________________ )</td>
-                    <td><b>HERMAN</b><br>Penanggung Jawab</td>
+                    <td><b>HERMAN</b><br>Supervisor</td>
                 </tr>
             </table>
             -----------------------------------------------<br>
@@ -805,7 +797,7 @@ window.simpanPengeluaranBaru = async () => {
 
     try {
         await push(ref(db, `bbs_operasional/${dbKey}`), {
-            tgl: tglInput, // 👈 SIMPAN TANGGAL OTOMATIS KE FIREBASE
+            tgl: tglInput, 
             ket: ketInput,
             nom: nomInput
         });
@@ -958,7 +950,7 @@ window.generatePDFKeseluruhan = async () => {
         doc.setFontSize(16); doc.setFont("helvetica", "bold");
         doc.text("PT. BERKAH BAJA STEEL", 148, 14, { align: "center" });
         doc.setFontSize(10); doc.setFont("helvetica", "normal");
-        doc.text("REKAPITULASI KESELURUHAN DATA PENGIRIMAN & BIAYA OPERASIONAL", 148, 20, { align: "center" });
+        doc.text("REKAPITULASI DATA PENGIRIMAN & BIAYA OPERASIONAL", 148, 20, { align: "center" });
         
         // 5. Render Tabel Laporan Global (Hanya yang DONE)
         doc.autoTable({
@@ -981,7 +973,7 @@ window.generatePDFKeseluruhan = async () => {
     if (opsY > 155) { doc.addPage(); opsY = 20; }
     
     doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
-    doc.text("RINCIAN BIAYA OPERASIONAL GLOBAL (POTONGAN PROFIT):", 14, opsY);
+    doc.text("RINCIAN BIAYA OPERASIONAL :", 14, opsY);
 
     doc.autoTable({
         // 1. Ditambahkan header 'TANGGAL' di posisi kolom ke-2
@@ -1023,7 +1015,7 @@ window.generatePDFKeseluruhan = async () => {
         
         // --- BARIS 1 & 2 (WARNA HITAM) ---
         doc.setTextColor(0, 0, 0);
-        doc.text(`• TOTAL BIAYA BOP ARMADA`, 18, totalY + 12);
+        doc.text(`• TOTAL BIAYA OPERASIONAL`, 18, totalY + 12);
         doc.text(`:`, 74, totalY + 12);
         doc.text(`Rp`, 78, totalY + 12); doc.text(`${akumulasiBop.toLocaleString('id-ID')}`, 125, totalY + 12, { align: "right" });
         
@@ -1039,7 +1031,7 @@ window.generatePDFKeseluruhan = async () => {
         
         // --- BARIS 4: TOTAL PENGELUARAN (KEMBALI KE WARNA HITAM) ---
         doc.setTextColor(0, 0, 0); // Kembalikan ke hitam murni
-        doc.text(`• TOTAL PENGELUARAN GLOBAL`, 18, totalY + 27);
+        doc.text(`• TOTAL PENGELUARAN`, 18, totalY + 27);
         doc.text(`:`, 74, totalY + 27);
         doc.text(`Rp`, 78, totalY + 27); doc.text(`${totalPengeluaranGlobal.toLocaleString('id-ID')}`, 125, totalY + 27, { align: "right" });
         doc.text(`(Kas/Ops)`, 128, totalY + 27);
@@ -1054,7 +1046,7 @@ window.generatePDFKeseluruhan = async () => {
             doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 34, { align: "right" });
         } else {
             doc.setTextColor(231, 76, 60); // Font Warna Merah Minus
-            doc.text(`TOTAL MARGIN SISA (PLUS/MINUS)`, 18, totalY + 34);
+            doc.text(`TOTAL MINUS`, 18, totalY + 34);
             doc.text(`:`, 74, totalY + 34);
             doc.text(`Rp`, 78, totalY + 34); 
             doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 34, { align: "right" });
