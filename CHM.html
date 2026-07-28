@@ -362,13 +362,16 @@ async function printSuratJalan(data) {
                 <tr><td>SOPIR</td><td>:</td><td>${data.sopir || "-"}</td></tr>
                 <tr><td>BARANG</td><td>:</td><td>${data.barang || "-"}</td></tr>
                 
-                <tr>
-                    <td colspan="3" style="padding: 5px 0;">
-                        -----------------------------------------------<br>
-                        panjang : .... ‖ lebar : .... ‖ tinggi : .... (m)<br>
-                        -----------------------------------------------
-                    </td>
-                </tr>
+               <tr>
+    <td colspan="3" style="padding: 5px 0; text-align: center;">
+        -----------------------------------------------<br>
+        <!-- margin-top memberi jarak ke garis atas, margin-bottom kecil ke garis bawah -->
+        <div style="margin-top: 22px; margin-bottom: 2px;">
+            panjang : .... ‖ lebar : .... ‖ tinggi : .... (m)
+        </div>
+        -----------------------------------------------
+    </td>
+</tr>
 
                 <tr><td>TOTAL MUAT</td><td>:</td><td><b> ...... M³</b></td></tr>
             </table>
