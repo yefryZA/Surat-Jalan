@@ -127,12 +127,12 @@
 
             <div style="margin-top:15px;">
                 <label class="lbl">TOTAL VOLUME BONGKAR (M3)</label>
-                <input type="number" id="input-vol-bongkar" step="0.01" placeholder="CONTOH: 22.50" style="border: 1px solid var(--gold); margin-bottom:20px; font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88; background: #111;">
+                <input type="number" id="input-vol-bongkar" step="0.01" placeholder="CONTOH: 22.50" style="margin-bottom:15px;">
             </div>
 
             <div>
                 <label class="lbl">HARGA JUAL KE KONSUMEN (RP)</label>
-                <input type="text" id="m-ops-mobil" inputmode="numeric" pattern="[0-9]*" placeholder="0.00" style="border: 1px solid var(--gold); margin-bottom:20px; font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88; background: #111;" oninput="formatRupiahOtomatis(this)">
+                <input type="text" id="input-harga-jual" placeholder="CONTOH: 1.100.000" style="margin-bottom:20px;" oninput="formatRupiahOtomatis(this)">
             </div>
 
             <button class="btn btn-green" style="margin-bottom:10px;" onclick="prosesTugasSelesai()">🚀 PROSES OTW & CETAK LAPORAN</button>
