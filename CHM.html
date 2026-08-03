@@ -127,12 +127,12 @@
 
             <div style="margin-top:15px;">
                 <label class="lbl">TOTAL VOLUME BONGKAR (M3)</label>
-                <input type="number" id="input-vol-bongkar" step="0.01" placeholder="CONTOH: 22.50" style="margin-bottom:15px;">
+                <input type="number" id="input-vol-bongkar" step="0.01" placeholder="CONTOH: 22.50" style="border: 1px solid var(--gold); margin-bottom:20px; font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88; background: #111;">
             </div>
 
             <div>
                 <label class="lbl">HARGA JUAL KE KONSUMEN (RP)</label>
-                <input type="text" id="input-harga-jual" placeholder="CONTOH: 1.100.000" style="margin-bottom:20px;" oninput="formatRupiahOtomatis(this)">
+                <input type="text" id="m-ops-mobil" inputmode="numeric" pattern="[0-9]*" placeholder="0.00" style="border: 1px solid var(--gold); margin-bottom:20px; font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88; background: #111;" oninput="formatRupiahOtomatis(this)">
             </div>
 
             <button class="btn btn-green" style="margin-bottom:10px;" onclick="prosesTugasSelesai()">🚀 PROSES OTW & CETAK LAPORAN</button>
@@ -350,7 +350,7 @@ async function printSuratJalan(data) {
      const printArea = document.createElement('div');
     printArea.style = "width: 380px; padding: 20px; background: white; color: black; font-family: monospace; position: absolute; left: -9999px; top: 0;";
     printArea.innerHTML = `
-    <div style="text-align: center; font-weight: bold; font-size: 18px;">PT. BERKAH BAJA STEEL</div>
+    <div style="text-align: center; font-weight: bold; font-size: 18px;">SURAT JALAN</div>
     <div style="text-align: center; font-size: 12px; font-weight: bold;">SUPLAY MATERIAL KE ${data.project || "LOSARANG"}</div>
     <div style="text-align: center;">--------------------------------</div>
     <div style="font-size: 14px; line-height: 1.5;">
@@ -396,7 +396,7 @@ async function printSuratJalan(data) {
                 </tr>
                 <tr>
                     <td>( _________________ )</td>
-                    <td><b>H E R M A N</b><br>Supervisor</td>
+                    <td><b>H. HENDAR WAHBAGIONO</b><br>Suplayer</td>
                 </tr>
             </table>
             -----------------------------------------------<br>
