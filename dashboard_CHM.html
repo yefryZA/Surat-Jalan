@@ -75,7 +75,16 @@
         .stat-card.gold { border-left-color: var(--accent-gold); }
         .stat-card.green { border-left-color: var(--accent-green); }
         .stat-card.orange { border-left-color: var(--accent-orange); }
+/* Tampilan Merah Menyala */
+.stat-card.red { 
+    border-left-color: #ff2a2a; 
+    box-shadow: 0 0 15px rgba(255, 42, 42, 0.2); /* Efek glow lembut pada kartu */
+}
 
+.stat-card.red .value {
+    color: #ff3333; /* Warna teks merah terang */
+    text-shadow: 0 0 10px rgba(255, 51, 51, 0.7); /* Efek teks menyala (glow) */
+}
         .stat-card .label {
             font-size: 11px;
             color: var(--text-sub);
@@ -235,10 +244,10 @@
             <div class="label">Total Vol (M / B)</div>
             <div class="value" id="d-total-vol">0 / 0 M³</div>
         </div>
-        <div class="stat-card gold">
-            <div class="label">Total BOP</div>
-            <div class="value" id="d-total-bop">Rp 0</div>
-        </div>
+      <div class="stat-card red">
+    <div class="label">Biaya Pengiriman</div>
+    <div class="value" id="d-total-bop">Rp 0</div>
+</div>
     </div>
 
     <!-- RINCIAN MATERIAL -->
