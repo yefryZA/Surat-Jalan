@@ -168,9 +168,7 @@
         <label class="lbl">FOTO MUATAN</label>
         <input type="file" capture="camera" id="m-foto">
         
-        <label class="lbl">FOTO KTP</label>
-        <input type="file" capture="camera" id="m-ktp">
-        
+              
         <!-- HARGA MATERIAL: Font Arial Black Cerah -->
         <label class="lbl" style="color:var(--gold); font-weight:bold;">⚙️ HARGA MATERIAL (RP)</label>
         <input type="text" id="m-ops-material" inputmode="numeric" pattern="[0-9]*" placeholder="0.00" style="border: 1px solid var(--gold); font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88; background: #111;" oninput="formatRupiahOtomatis(this)">
@@ -434,7 +432,7 @@ window.prosesMuat = async () => {
         const b = document.getElementById('m-barang').value.toUpperCase();
         const v = document.getElementById('m-vol').value;
         const fS = document.getElementById('m-foto').files[0];
-        const fK = document.getElementById('m-ktp').files[0];
+        
         const p_dim = document.getElementById('m-p').value;
         const l_dim = document.getElementById('m-l').value;
         const t_dim = document.getElementById('m-t').value;
@@ -445,7 +443,7 @@ window.prosesMuat = async () => {
         const rawMobil = document.getElementById('m-ops-mobil').value;
         
         // VALIDASI: Pastikan semua data terisi, termasuk BOP Harga Material & Ongkos Mobil
-        if(!p || !s || !b || !v || !fS || !fK || !p_dim || !l_dim || !t_dim || !proj || !rawMaterial || !rawMobil) {
+        if(!p || !s || !b || !v || !fS || !p_dim || !l_dim || !t_dim || !proj || !rawMaterial || !rawMobil) {
             return alert("LENGKAPI SEMUA DATA termasuk PROJECT TUJUAN & BIAYA BOP!");
         }
         
@@ -458,7 +456,7 @@ window.prosesMuat = async () => {
         const totalBopSatuUnit = hargaMaterial + hargaMobil;
 
         const uS = await uploadFoto(fS, `MUAT_${p}.jpg`);
-        const uK = await uploadFoto(fK, `KTP_${p}.jpg`);
+       
         
         const newRef = push(ref(db, `bbs_logs/${dbKey}`));
         const logData = { 
@@ -480,8 +478,7 @@ window.prosesMuat = async () => {
             bop_mobil: hargaMobil,
             bop_unit: totalBopSatuUnit, // Total gabungan tetap masuk ke field utama
             
-            fotoM: uS, 
-            fotoKTP: uK, 
+            fotoM: uS,           
             tgl: new Date().toLocaleDateString('id-ID'),
             jamM: new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', hour12: false}) 
         };
@@ -880,6 +877,14 @@ window.generatePDFKeseluruhan = async () => {
         let akumulasiJual = 0;
         let akumulasiProfitKotor = 0; 
         
+        // 🚀 PENAMBAHAN VARIABLE PENAMPUNG VOLUME & BREAKDOWN BARANG
+        let akumulasiVolM = 0;
+        let akumulasiVolB = 0;
+        let volB_Split12 = 0;
+        let volB_Screening = 0;
+        let volB_AbuBatu = 0;
+        let volB_Lainnya = 0;
+        
         const bodyTableMassal = [];
         let no = 1;
 
@@ -900,9 +905,24 @@ window.generatePDFKeseluruhan = async () => {
             const hargaJual = Number(item.harga_jual) || 0;
             const marginProfit = Number(item.margin_per_unit) || 0;
 
+            // AKUMULASI DATA UTAMA
+            akumulasiVolM += vMuat;
+            akumulasiVolB += vBongkar;
             akumulasiBop += totalBop;
             akumulasiJual += hargaJual;
             akumulasiProfitKotor += marginProfit;
+
+            // 🚀 LOGIKA BREAKDOWN VOLUME BONGKAR PER JENIS BARANG
+            const namaBarang = (item.barang || "").toUpperCase().trim();
+            if (namaBarang.includes("SPLIT 1") || namaBarang.includes("SPLIT 1/2") || namaBarang.includes("SPLIT 1.2")) {
+                volB_Split12 += vBongkar;
+            } else if (namaBarang.includes("SCREENING") || namaBarang.includes("SCRENING")) {
+                volB_Screening += vBongkar;
+            } else if (namaBarang.includes("ABU BATU") || namaBarang.includes("ABU")) {
+                volB_AbuBatu += vBongkar;
+            } else {
+                volB_Lainnya += vBongkar;
+            }
 
             bodyTableMassal.push([
                 no++,
@@ -932,15 +952,15 @@ window.generatePDFKeseluruhan = async () => {
                 totalPengeluaranGlobal += nominalOps;
 
                 // 🚀 DIKIRIM TERPISAH: No, Keterangan, Teks "Rp", baru Angka Nominalnya
-        bodyTableOps.push([
-    noOps++,
-    o.tgl || '-', 
-    (o.ket || '-').toUpperCase(), 
-    "Rp",
-    nominalOps.toLocaleString('id-ID')
-]);
-    });
-}
+                bodyTableOps.push([
+                    noOps++,
+                    o.tgl || '-', 
+                    (o.ket || '-').toUpperCase(), 
+                    "Rp",
+                    nominalOps.toLocaleString('id-ID')
+                ]);
+            });
+        }
 
         // 🚀 3. HITUNGAN POTONGAN 10% PERUSAHAAN
         const potonganPerusahaan = akumulasiProfitKotor > 0 ? Math.round(akumulasiProfitKotor * 0.10) : 0;
@@ -968,88 +988,106 @@ window.generatePDFKeseluruhan = async () => {
             }
         });
 
-   // 🚀 6. RENDER TABEL RINCIAN PENGELUARAN BARU (STRUKTUR AKUNTANSI PARIPURNA)
-    let opsY = doc.lastAutoTable.finalY + 8;
-    if (opsY > 155) { doc.addPage(); opsY = 20; }
-    
-    doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
-    doc.text("RINCIAN BIAYA OPERASIONAL :", 14, opsY);
+        // 🚀 6. RENDER TABEL RINCIAN PENGELUARAN BARU
+        let opsY = doc.lastAutoTable.finalY + 8;
+        if (opsY > 155) { doc.addPage(); opsY = 20; }
+        
+        doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
+        doc.text("RINCIAN BIAYA OPERASIONAL :", 14, opsY);
 
-    doc.autoTable({
-        // 1. Ditambahkan header 'TANGGAL' di posisi kolom ke-2
-        head: [['NO', 'TANGGAL', 'RINCIAN / KETERANGAN BIAYA OPERASIONAL', 'NOMINAL (RUPIAH)', '']],
-        // 2. Format fallback jika data kosong disesuaikan jumlah kolomnya (5 kolom)
-        body: bodyTableOps.length > 0 ? bodyTableOps : [['-', '-', 'BELUM ADA PENGELUARAN TERINPUT', 'Rp', '0']],
-        startY: opsY + 3,
-        theme: 'striped',
-        margin: { left: 14 },
-        styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [192, 57, 43], fontStyle: 'bold', halign: 'center' }, 
-        columnStyles: {
-            0: { cellWidth: 12, halign: 'center' },                      // Kolom NO
-            1: { cellWidth: 25, halign: 'center' },                      // 🚀 Kolom TANGGAL baru
-            2: { cellWidth: 90, halign: 'left' },                        // Kolom RINCIAN
-            3: { cellWidth: 12, halign: 'left', fontStyle: 'normal' },   // Kolom "Rp"
-            4: { cellWidth: 36, halign: 'right' }                        // Kolom Angka Nominal
-        },
-        // 3. Colspan untuk header NOMINAL digeser ke index kolom ke-3
-        didParseCell: function(data) {
-            if (data.cell.section === 'head' && data.column.index === 3) {
-                data.cell.colSpan = 2;
+        doc.autoTable({
+            head: [['NO', 'TANGGAL', 'RINCIAN / KETERANGAN BIAYA OPERASIONAL', 'NOMINAL (RUPIAH)', '']],
+            body: bodyTableOps.length > 0 ? bodyTableOps : [['-', '-', 'BELUM ADA PENGELUARAN TERINPUT', 'Rp', '0']],
+            startY: opsY + 3,
+            theme: 'striped',
+            margin: { left: 14 },
+            styles: { fontSize: 8, cellPadding: 2 },
+            headStyles: { fillColor: [192, 57, 43], fontStyle: 'bold', halign: 'center' }, 
+            columnStyles: {
+                0: { cellWidth: 12, halign: 'center' },
+                1: { cellWidth: 25, halign: 'center' },
+                2: { cellWidth: 90, halign: 'left' },
+                3: { cellWidth: 12, halign: 'left', fontStyle: 'normal' },
+                4: { cellWidth: 36, halign: 'right' }
+            },
+            didParseCell: function(data) {
+                if (data.cell.section === 'head' && data.column.index === 3) {
+                    data.cell.colSpan = 2;
+                }
             }
-        }
-    });
+        });
 
-    // 7. Blok Ringkasan Finansial Bawah
+        // 7. Blok Ringkasan Finansial Bawah (KOTAK DISESUAIKAN TINGGINYA UNTUK BREAKDOWN MATERIAL)
         let totalY = doc.lastAutoTable.finalY + 10;
-        if (totalY > 155) { doc.addPage(); totalY = 20; }
+        if (totalY > 140) { doc.addPage(); totalY = 20; }
+
+        // Susun Teks Breakdown Barang yang Hanya Punya Nilai > 0
+        let textBreakdown = `[ Split 1/2: ${volB_Split12.toFixed(2)} M³ | Screening: ${volB_Screening.toFixed(2)} M³ | Abu Batu: ${volB_AbuBatu.toFixed(2)} M³`;
+        if (volB_Lainnya > 0) {
+            textBreakdown += ` | Lainnya: ${volB_Lainnya.toFixed(2)} M³`;
+        }
+        textBreakdown += ` ]`;
 
         // Gambar Kotak Background Abu-abu Tipis
         doc.setFillColor(245, 247, 250);
-        doc.rect(14, totalY, 165, 38, "F"); 
+        doc.rect(14, totalY, 165, 50, "F"); 
         
         doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
         doc.text("RINGKASAN FINANSIAL KESELURUHAN :", 18, totalY + 6);
         
         doc.setFont("helvetica", "normal"); doc.setFontSize(9);
         
-        // --- BARIS 1 & 2 (WARNA HITAM) ---
+        // --- BARIS 1: TOTAL VOLUME MUAT & BONGKAR ---
         doc.setTextColor(0, 0, 0);
-        doc.text(`• TOTAL BIAYA OPERASIONAL`, 18, totalY + 12);
+        doc.text(`• TOTAL VOLUME (MUAT / BONGKAR)`, 18, totalY + 12);
         doc.text(`:`, 74, totalY + 12);
-        doc.text(`Rp`, 78, totalY + 12); doc.text(`${akumulasiBop.toLocaleString('id-ID')}`, 125, totalY + 12, { align: "right" });
-        
-        doc.text(`• TOTAL HARGA JUAL`, 18, totalY + 17);
-        doc.text(`:`, 74, totalY + 17);
-        doc.text(`Rp`, 78, totalY + 17); doc.text(`${akumulasiJual.toLocaleString('id-ID')}`, 125, totalY + 17, { align: "right" });
-        
-        // --- BARIS 3: POTONGAN PERUSAHAAN 10% (🚀 DIUBAH JADI WARNA HIJAU) ---
-        doc.setTextColor(231, 76, 60); // Set warna merah
-        doc.text(`• ROYALTI PERUSAHAAN (10 %)`, 18, totalY + 22);
+        doc.text(`${akumulasiVolM.toFixed(2)} M³ / ${akumulasiVolB.toFixed(2)} M³`, 125, totalY + 12, { align: "right" });
+
+        // --- BARIS BREAKDOWN RINCIAN BONGKAR (FONT LEBIH KECIL & ITALIC) ---
+        doc.setFontSize(7.5); doc.setFont("helvetica", "italic"); doc.setTextColor(80, 80, 80);
+        doc.text(`  Rincian Bongkar`, 18, totalY + 16);
+        doc.text(`:`, 74, totalY + 16);
+        doc.text(`${textBreakdown}`, 125, totalY + 16, { align: "right" });
+
+        // KEMBALIKAN FONT NORMAL
+        doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(0, 0, 0);
+
+        // --- BARIS FINANSIAL ---
+        doc.text(`• TOTAL BIAYA OPERASIONAL`, 18, totalY + 22);
         doc.text(`:`, 74, totalY + 22);
-        doc.text(`Rp`, 78, totalY + 22); doc.text(`${potonganPerusahaan.toLocaleString('id-ID')}`, 125, totalY + 22, { align: "right" });
+        doc.text(`Rp`, 78, totalY + 22); doc.text(`${akumulasiBop.toLocaleString('id-ID')}`, 125, totalY + 22, { align: "right" });
         
-        // --- BARIS 4: TOTAL PENGELUARAN (KEMBALI KE WARNA HITAM) ---
-        doc.setTextColor(0, 0, 0); // Kembalikan ke hitam murni
-        doc.text(`• TOTAL PENGELUARAN`, 18, totalY + 27);
+        doc.text(`• TOTAL HARGA JUAL`, 18, totalY + 27);
         doc.text(`:`, 74, totalY + 27);
-        doc.text(`Rp`, 78, totalY + 27); doc.text(`${totalPengeluaranGlobal.toLocaleString('id-ID')}`, 125, totalY + 27, { align: "right" });
-        doc.text(`(Kas/Ops)`, 128, totalY + 27);
+        doc.text(`Rp`, 78, totalY + 27); doc.text(`${akumulasiJual.toLocaleString('id-ID')}`, 125, totalY + 27, { align: "right" });
+        
+        // --- ROYALTI PERUSAHAAN 10% (WARNA MERAH) ---
+        doc.setTextColor(231, 76, 60); 
+        doc.text(`• ROYALTI PERUSAHAAN (10 %)`, 18, totalY + 32);
+        doc.text(`:`, 74, totalY + 32);
+        doc.text(`Rp`, 78, totalY + 32); doc.text(`${potonganPerusahaan.toLocaleString('id-ID')}`, 125, totalY + 32, { align: "right" });
+        
+        // --- TOTAL PENGELUARAN (KEMBALI KE WARNA HITAM) ---
+        doc.setTextColor(0, 0, 0); 
+        doc.text(`• TOTAL PENGELUARAN`, 18, totalY + 37);
+        doc.text(`:`, 74, totalY + 37);
+        doc.text(`Rp`, 78, totalY + 37); doc.text(`${totalPengeluaranGlobal.toLocaleString('id-ID')}`, 125, totalY + 37, { align: "right" });
+        doc.text(`(Kas/Ops)`, 128, totalY + 37);
 
         // 🚀 BARIS TOTAL PROFIT BERSIH AKHIR
         doc.setFont("helvetica", "bold");
         if (keuntunganBersihFinal >= 0) {
             doc.setTextColor(46, 204, 113); // Font Warna Hijau Sukses
-            doc.text(`TOTAL PROFIT`, 18, totalY + 34);
-            doc.text(`:`, 74, totalY + 34);
-            doc.text(`Rp`, 78, totalY + 34); 
-            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 34, { align: "right" });
+            doc.text(`TOTAL PROFIT`, 18, totalY + 44);
+            doc.text(`:`, 74, totalY + 44);
+            doc.text(`Rp`, 78, totalY + 44); 
+            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
         } else {
             doc.setTextColor(231, 76, 60); // Font Warna Merah Minus
-            doc.text(`TOTAL MINUS`, 18, totalY + 34);
-            doc.text(`:`, 74, totalY + 34);
-            doc.text(`Rp`, 78, totalY + 34); 
-            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 34, { align: "right" });
+            doc.text(`TOTAL MINUS`, 18, totalY + 44);
+            doc.text(`:`, 74, totalY + 44);
+            doc.text(`Rp`, 78, totalY + 44); 
+            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
         }
       
         // 8. TTD Manager Kantor (Kembalikan warna teks ke Hitam murni)
@@ -1057,37 +1095,32 @@ window.generatePDFKeseluruhan = async () => {
         doc.setFont("helvetica", "normal"); doc.setFontSize(10);
         doc.text("Hormat Kami,", 245, totalY + 6, { align: "center" });
         
-        // 🚀 NAMA ABANG DITURUNKAN: Dari totalY + 20 kita mundurkan ke totalY + 28 (Biar gak mepet)
         doc.setFont("helvetica", "bold");
-        doc.text("YEFRY DESFIRMANZA", 245, totalY + 28, { align: "center", underline: true });
+        doc.text("YEFRY DESFIRMANZA", 245, totalY + 36, { align: "center", underline: true });
         
-        // JABATAN DITURUNKAN: Mengikuti nama Abang, diset ke totalY + 32
         doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-        doc.text("MANAGER", 245, totalY + 32, { align: "center" });
+        doc.text("MANAGER", 245, totalY + 40, { align: "center" });
 
         const skrg = new Date();
         doc.setFontSize(7); doc.setFont("helvetica", "italic"); doc.setTextColor(150, 150, 150);
-        doc.text(`E-Laporan dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 44);
+        doc.text(`E-Laporan dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 54);
 
         // 9. Eksekusi Download PDF Laporan Rekap Massal
         doc.save(`LAPORAN_GLOBAL_PENGIRIMAN_PT_BBS.pdf`);
         
-      // 10. POP-UP PILIHAN RESET MUNCUL (VERSI SHARING PROFIT PT. BBS - AMAN & AKURAT)
+        // 10. POP-UP PILIHAN RESET MUNCUL
         setTimeout(async () => {
             if (confirm("PROSES CETAK PDF MASSAL SELESAI!\nApakah Abang ingin sekalian melakukan RESET DATA untuk periode ini?")) {
                 
-                // 🚀 PROSES SELEKSI: Hapus data armada yang DONE saja dari kamar logs
                 for (let key in dataLogs) {
                     const item = dataLogs[key];
                     const statusMobil = (item.status || "").toUpperCase();
                     
                     if (statusMobil === 'DONE') {
-                        // Hanya hapus armada ini jika statusnya benar-benar DONE
                         await remove(ref(db, `bbs_logs/${dbKey}/${key}`));
                     }
                 }
 
-                // 🚀 SE SEKALI SABET: Hapus seluruh kamar operasional global karena sudah dilaporkan di PDF
                 await remove(ref(db, `bbs_operasional/${dbKey}`));
                 
                 alert("RESET SELESAI!\nData pengiriman (DONE) & seluruh biaya pengeluaran operasional global telah DISAPU BERSIH.\nData armada yang masih OTW tetap aman terpajang di dashboard.");
