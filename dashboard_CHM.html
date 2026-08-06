@@ -75,16 +75,7 @@
         .stat-card.gold { border-left-color: var(--accent-gold); }
         .stat-card.green { border-left-color: var(--accent-green); }
         .stat-card.orange { border-left-color: var(--accent-orange); }
-/* Tampilan Merah Menyala */
-.stat-card.red { 
-    border-left-color: #ff2a2a; 
-    box-shadow: 0 0 15px rgba(255, 42, 42, 0.2); /* Efek glow lembut pada kartu */
-}
 
-.stat-card.red .value {
-    color: #ff3333; /* Warna teks merah terang */
-    text-shadow: 0 0 10px rgba(255, 51, 51, 0.7); /* Efek teks menyala (glow) */
-}
         .stat-card .label {
             font-size: 11px;
             color: var(--text-sub);
@@ -244,11 +235,11 @@
             <div class="label">Total Vol (M / B)</div>
             <div class="value" id="d-total-vol">0 / 0 M³</div>
         </div>
-      <div class="stat-card red">
-    <div class="label">Biaya Pengiriman</div>
-    <div class="value" id="d-total-bop">Rp 0</div>
-</div>
+      <div class="stat-card gold">
+        <div class="label">Total BOP</div>
+        <div class="value" id="d-total-bop" style="font-family: 'Arial Black', Gadget, sans-serif; color: #ff0033; text-shadow: 0 0 10px rgba(255, 0, 51, 0.6);">Rp 0</div>
     </div>
+</div>
 
     <!-- RINCIAN MATERIAL -->
     <div class="material-box">
@@ -282,6 +273,7 @@
             <thead>
                 <tr>
                     <th>NO</th>
+                    <th>NOMOR SJ</th>
                     <th>TANGGAL</th>
                     <th>PLAT NO</th>
                     <th>SOPIR</th>
@@ -390,55 +382,73 @@
 
         // FUNGSI RENDER TABEL
         window.renderTable = () => {
-            const tbody = document.getElementById('direksi-table-body');
-            tbody.innerHTML = "";
+    const tbody = document.getElementById('direksi-table-body');
+    tbody.innerHTML = "";
 
-            const filtered = cacheData.filter(i => {
-                const st = (i.status || "").toUpperCase();
-                if (currentFilter === 'OTW') return st === 'OTW';
-                if (currentFilter === 'DONE') return st === 'DONE';
-                return true;
-            });
+    const filtered = cacheData.filter(i => {
+        const st = (i.status || "").toUpperCase();
+        if (currentFilter === 'OTW') return st === 'OTW';
+        if (currentFilter === 'DONE') return st === 'DONE';
+        return true;
+    });
 
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-sub); padding: 20px;">Tidak Ada Data Pengiriman</td></tr>`;
-                return;
-            }
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--text-sub); padding: 20px;">Tidak Ada Data Pengiriman</td></tr>`;
+        return;
+    }
 
-            let no = 1;
-            filtered.forEach(i => {
-                const st = (i.status || "").toUpperCase();
-                const badge = st === 'OTW' 
-                    ? `<span class="badge-otw">PROSES BONGKAR (OTW)</span>` 
-                    : `<span class="badge-done">✅ DONE</span>`;
+    // Ambil bulan romawi dan tahun sekarang untuk cadangan format nomor surat jalan
+    const romawiBulan = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+    const d = new Date();
+    const bulanRomawi = romawiBulan[d.getMonth()];
+    const tahunSekarang = d.getFullYear();
+    const totalData = cacheData.length;
 
-                const vM = Number(i.volM) || 0;
-                const vB = Number(i.volB) || 0;
-                const bop = Number(i.bop_unit) || 0;
+    let no = 1;
+    filtered.forEach((i, index) => {
+        const st = (i.status || "").toUpperCase();
+        const badge = st === 'OTW' 
+            ? `<span class="badge-otw">O T W</span>` 
+            : `<span class="badge-done">✅ DONE</span>`;
 
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${no++}</td>
-                        <td>${i.tgl || i.tglM || i.tanggal || '-'}</td>
-                        <td style="font-weight: bold; color: #FFF;">${i.plat || '-'}</td>
-                        <td style="color: var(--accent-blue);">${i.sopir || '-'}</td>
-                        <td><span style="color: var(--accent-gold);">${i.project || 'LOSARANG'}</span></td>
-                        <td>${(i.barang || '-').toUpperCase()}</td>
-                        <td style="font-weight: bold;">${vM.toFixed(2)} / ${vB.toFixed(2)}</td>
-                        <td>Rp ${bop.toLocaleString('id-ID')}</td>
-                        <td>${badge}</td>
-                    </tr>
-                `;
-            });
-        };
+        const vM = Number(i.volM) || 0;
+        const vB = Number(i.volB) || 0;
+        const bop = Number(i.bop_unit) || 0;
 
-        // FUNGSI FILTER STATUS
-        window.filterStatus = (type, btn) => {
-            currentFilter = type;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderTable();
-        };
+        // Ambil nomor surat jalan dari data Firebase, atau estimasikan mundur jika kosong
+        let nomorSuratJalanLengkap = i.noSuratJalan || i.nomor_surat_jalan || i.surat_jalan || i.no_sj;
+        
+        if (!nomorSuratJalanLengkap || nomorSuratJalanLengkap === '-' || nomorSuratJalanLengkap.includes('000/bbs')) {
+            const estimatedNo = 70 - totalData + (index + 1); // Mengacu pada counter terakhir 70 di Firebase
+            const safeNo = estimatedNo > 0 ? estimatedNo : (index + 1);
+            const stringNomorUrut = String(safeNo).padStart(3, '0');
+            nomorSuratJalanLengkap = `${stringNomorUrut}/bbs/${bulanRomawi}/${tahunSekarang}`;
+        }
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${no++}</td>
+                <td style="font-family: monospace; color: #00e5ff; font-weight: bold;">${nomorSuratJalanLengkap}</td>
+                <td>${i.tgl || i.tglM || i.tanggal || '-'}</td>
+                <td style="font-weight: bold; color: #FFF;">${i.plat || '-'}</td>
+                <td style="color: var(--accent-blue);">${i.sopir || '-'}</td>
+                <td><span style="color: var(--accent-gold);">${i.project || 'LOSARANG'}</span></td>
+                <td>${(i.barang || '-').toUpperCase()}</td>
+                <td style="font-weight: bold;">${vM.toFixed(2)} / ${vB.toFixed(2)}</td>
+                <td>Rp ${bop.toLocaleString('id-ID')}</td>
+                <td>${badge}</td>
+            </tr>
+        `;
+    });
+};
+
+// FUNGSI FILTER STATUS
+window.filterStatus = (type, btn) => {
+    currentFilter = type;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTable();
+};
     </script>
 </body>
 </html>
