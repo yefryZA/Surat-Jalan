@@ -506,15 +506,28 @@ window.prosesMuat = async () => {
     }
 
 // --- RENDER DASHBOARD ---
-onValue(ref(db, `bbs_logs/${dbKey}`), (snap) => {
+onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
     const data = snap.val();
     let tm = 0, tb = 0, otw = 0; 
     rawData = [];
     const list = document.getElementById('log-list');
     list.innerHTML = "";
     
+    // Ambil nilai counter terbaru dari Firebase (bbs_counter_sj)
+    let counterSjRef = ref(db, `bbs_counter_sj/${dbKey}`);
+    let counterSnap = await get(counterSjRef);
+    let currentCounter = counterSnap.exists() ? Number(counterSnap.val()) : 70; // Default ke 70 jika belum ada
+
     if(data) {
-        Object.keys(data).forEach(k => {
+        const romawiBulan = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+        const d = new Date();
+        const bulanRomawi = romawiBulan[d.getMonth()];
+        const tahunSekarang = d.getFullYear();
+
+        const keys = Object.keys(data);
+        const totalData = keys.length;
+        
+        keys.forEach((k, index) => {
             const i = data[k];
             
             // Konversi status ke huruf besar semua agar aman dari error pengetikan ceker
@@ -547,6 +560,23 @@ onValue(ref(db, `bbs_logs/${dbKey}`), (snap) => {
                     </span>
                 `;
             }
+
+            // Ambil nomor surat jalan dari data, jika tidak ada, estimasikan mundur dari counter utama Firebase
+            let nomorSuratJalanLengkap = i.noSuratJalan || i.nomor_surat_jalan || i.surat_jalan || i.no_sj;
+            
+            if (!nomorSuratJalanLengkap || nomorSuratJalanLengkap === '-' || nomorSuratJalanLengkap.includes('000/bbs')) {
+                // Menghitung mundur nomor berdasarkan posisi index data terhadap total counter terakhir
+                // Contoh: Jika total data 10 dan counter 70, maka item pertama adalah (70 - 10 + 1 + index)
+                const estimatedNo = currentCounter - totalData + (index + 1);
+                const safeNo = estimatedNo > 0 ? estimatedNo : (index + 1);
+                const stringNomorUrut = String(safeNo).padStart(3, '0');
+                nomorSuratJalanLengkap = `${stringNomorUrut}/bbs/${bulanRomawi}/${tahunSekarang}`;
+            }
+            
+            // Gabungkan jam muat dan tanggal (contoh: 12.30 ※ 5/8/2026)
+            const jamMuat = i.jamM || i.jam_muat || i.jam || '';
+            const tglMuat = i.tgl || i.tglM || i.tanggal || '-';
+            const infoWaktu = jamMuat ? `${jamMuat} ※ ${tglMuat}` : tglMuat;
             
             // Render Baris Truck - VERSI RESPONSIF HP (Layout Vertikal, Tulisan Manjang Bebas)
             list.innerHTML += `
@@ -554,11 +584,16 @@ onValue(ref(db, `bbs_logs/${dbKey}`), (snap) => {
         
         <div style="width: 100%; font-family: 'Poppins', sans-serif;">
             
+           <!-- Baris Paling Atas: Nomor Surat Jalan Sesuai Struk (Teks biasa tanpa container) -->
+           <div style="font-size: 13px; font-weight: bold; color: #00e5ff; margin-bottom: 4px; letter-spacing: 0.5px; font-family: monospace;">
+                ${nomorSuratJalanLengkap}
+           </div>
+
            <div style="margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
-    <span style="font-size: 16px; font-weight: bold; color: #FFF; letter-spacing: 0.5px;">${i.plat}</span> 
-    <span style="font-size: 13px; font-weight: bold; color: var(--gold); background: rgba(255,215,0,0.15); padding: 2px 6px; border-radius: 4px;">[${i.project || 'LOSARANG'}]</span>
-    <span style="font-size: 12px; color: #bbb; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; margin-left: auto;">${i.tgl || i.tglM || i.tanggal || '-'}</span>
-</div>
+                <span style="font-size: 16px; font-weight: bold; color: #FFF; letter-spacing: 0.5px;">${i.plat}</span> 
+                <span style="font-size: 13px; font-weight: bold; color: var(--gold); background: rgba(255,215,0,0.15); padding: 2px 6px; border-radius: 4px;">[${i.project || 'LOSARANG'}]</span>
+                <span style="font-size: 12px; color: #bbb; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; margin-left: auto;">${infoWaktu}</span>
+            </div>
             
             <div style="font-size: 15px; font-weight: bold; color: #00e5ff; margin-bottom: 6px; text-shadow: 0 0 5px rgba(0,229,255,0.2); display: flex; justify-content: space-between; align-items: center;">
                 <span>MUAT ${i.barang ? i.barang.toUpperCase() : '-'}</span>
