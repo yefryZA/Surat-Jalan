@@ -1140,8 +1140,20 @@ window.generatePDFKeseluruhan = async () => {
         doc.setFontSize(7); doc.setFont("helvetica", "italic"); doc.setTextColor(150, 150, 150);
         doc.text(`E-Laporan dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 54);
 
+        // Ambil tanggal hari ini
+const today = new Date();
+const tahun = today.getFullYear();
+const bulan = String(today.getMonth() + 1).padStart(2, '0');
+const tanggal = String(today.getDate()).padStart(2, '0');
+
+// Format tanggal (Contoh hasil: 2026-06-07)
+const formatTanggal = `${tahun}-${bulan}-${tanggal}`;
+        
         // 9. Eksekusi Download PDF Laporan Rekap Massal
-        doc.save(`LAPORAN_HARIAN PT. BBS-${tglFormat}.pdf`);
+       const today = new Date();
+        const formatTanggal = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        
+        doc.save(`LAPORAN_HARIAN_PT_BBS_${formatTanggal}.pdf`);
         
         // 10. POP-UP PILIHAN RESET MUNCUL
         setTimeout(async () => {
