@@ -1141,7 +1141,7 @@ window.generatePDFKeseluruhan = async () => {
         doc.text(`E-Laporan dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 54);
 
         // 9. Eksekusi Download PDF Laporan Rekap Massal
-        doc.save(`LAPORAN_GLOBAL_PENGIRIMAN_PT_BBS.pdf`);
+        doc.save(`LAPORAN_HARIAN PT. BBS-${tglFormat}.pdf`);
         
         // 10. POP-UP PILIHAN RESET MUNCUL
         setTimeout(async () => {
