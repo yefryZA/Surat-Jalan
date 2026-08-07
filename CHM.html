@@ -1140,8 +1140,12 @@ window.generatePDFKeseluruhan = async () => {
         doc.setFontSize(7); doc.setFont("helvetica", "italic"); doc.setTextColor(150, 150, 150);
         doc.text(`E-Laporan dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 54);
 
+        
         // 9. Eksekusi Download PDF Laporan Rekap Massal
-        doc.save(`LAPORAN_GLOBAL_PENGIRIMAN_PT_BBS.pdf`);
+        const today = new Date();
+        const formatTanggal = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
+        
+        doc.save(`LAPORAN PENGIRIMAN-${formatTanggal}.pdf`);
         
         // 10. POP-UP PILIHAN RESET MUNCUL
         setTimeout(async () => {
