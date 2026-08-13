@@ -64,12 +64,30 @@
             100% { transform: translateX(-100%); }
         }
 
-        /* Wrapper Jam & Tanggal Memanjang (Satu Baris, Center) */
+        /* Efek Hijau Menyala Kelap-Kelip untuk Bullet */
+        .neon-bullet {
+            color: #00ff66;
+            text-shadow: 0 0 8px #00ff66, 0 0 15px #00ff66;
+            animation: blink-neon 1.2s ease-in-out infinite;
+        }
+
+        @keyframes blink-neon {
+            0%, 100% {
+                opacity: 1;
+                text-shadow: 0 0 8px #00ff66, 0 0 15px #00ff66;
+            }
+            50% {
+                opacity: 0.2;
+                text-shadow: none;
+            }
+        }
+
+        /* Wrapper Jam & Tanggal Horizontal Sesuai Contoh (Center) */
         .clock-date-wrapper {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
             width: 100%;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             padding-top: 12px;
@@ -77,26 +95,30 @@
         }
 
         #live-clock {
-            font-size: 38px;
+            font-size: 36px;
             font-weight: bold;
             color: #00e5ff;
             text-shadow: 0 0 15px rgba(0, 229, 255, 0.6);
-            letter-spacing: 2px;
+            letter-spacing: 1px;
             font-family: 'Orbitron', sans-serif;
             line-height: 1;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
         }
 
-        .clock-divider {
-            font-size: 32px;
-            color: rgba(255, 255, 255, 0.3);
-            font-weight: bold;
+        /* Styling khusus untuk teks detik agar lebih kecil */
+        #live-seconds {
+            font-size: 18px;
+            color: #00bcd4;
+            font-weight: normal;
         }
 
         #live-date {
-            font-size: 18px;
+            font-size: 24px;
             font-weight: bold;
             color: #ffd700;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             text-transform: uppercase;
         }
 
@@ -137,6 +159,7 @@
             justify-content: space-between;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
             transition: transform 0.2s ease, border-color 0.2s ease;
+            box-sizing: border-box;
         }
 
         .truck-card:hover {
@@ -241,6 +264,8 @@
             gap: 4px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             padding-top: 8px;
+            width: 100%;
+            box-sizing: border-box;
         }
         .btn-otw {
             background: #FF9800;
@@ -254,13 +279,14 @@
             width: 100%;
             text-align: center;
             transition: background 0.2s;
+            box-sizing: border-box;
         }
         .btn-otw:hover {
             background: #f57c00;
         }
         .badge-done {
             background: #4CAF50;
-            padding: 5px 10px;
+            padding: 6px 10px;
             border-radius: 4px;
             font-size: 10px;
             font-weight: bold;
@@ -268,6 +294,7 @@
             width: 100%;
             text-align: center;
             color: white;
+            box-sizing: border-box;
         }
         .selisih-wrapper {
             width: 100%;
@@ -283,19 +310,21 @@
         <h2>Dashboard Cilegon</h2>
     </div>
 
-    <!-- Tampilan Dashboard Utama -->
+    <!-- Tampilan Mode Utama -->
     <div id="view-dashboard" class="view-container">
-             <div class="dashboard-header">
+        <!-- Header dengan Teks Berjalan & Efek Neon Hijau Berkedip pada Simbol Titik -->
+        <div class="dashboard-header">
             <div class="marquee-container">
                 <div class="marquee-text">
-                    MONITORING TRUCKING PT. BERKAH BAJA STEEL &nbsp;&bull;&nbsp; TOTAL TRUCK DIJALAN : ⟪ <span id="d-count-otw">0</span> UNIT ⟫ &nbsp;&bull;&nbsp; HARAP CEK BERKALA STATUS PENGIRIMAN UNIT
+                    MONITORING TRUCKING PT. BERKAH BAJA STEEL <span class="neon-bullet">&nbsp;&bull;&nbsp;</span> TOTAL TRUCK DIJALAN : ⟪ <span id="d-count-otw">0</span> UNIT ⟫ <span class="neon-bullet">&nbsp;&bull;&nbsp;</span> HARAP CEK BERKALA STATUS PENGIRIMAN UNIT
                 </div>
             </div>
             
             <div class="clock-date-wrapper">
+                <div id="live-clock">
+                    <span id="live-time-main">00.00</span><span id="live-seconds">.00</span>
+                </div>
                 <div id="live-date">--/--/----</div>
-                <div class="clock-divider">|</div>
-                <div id="live-clock">00:00:00</div>
             </div>
         </div>
 
@@ -316,7 +345,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const dbKey = "CHM";
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyZhTJrSLlzeV8DyC1NcZciJyUrTLzMff5UahkTpZcDuF6PPX2o4E9Pc2K_guOhMjEh/exec";
 
         // Pengaturan Mode Tampilan
         const mode = new URLSearchParams(window.location.search).get('mode');
@@ -326,26 +354,27 @@
             document.getElementById('view-dashboard').style.display = 'flex';
         }
 
-        // Fungsi Jam & Tanggal Lengkap Real-Time (Nama Bulan Lengkap, Sebaris/Memanjang, Center)
+        // Fungsi Jam, Menit, Detik & Tanggal Real-Time
         function updateClockAndDate() {
             const now = new Date();
             
-            // Format Jam (HH:MM:SS)
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
-            document.getElementById('live-clock').innerText = `${hours}:${minutes}:${seconds}`;
+            
+            // Memasukkan jam/menit dan detik ke elemen terpisah
+            document.getElementById('live-time-main').innerText = `${hours}.${minutes}`;
+            document.getElementById('live-seconds').innerText = `.${seconds}`;
 
-            // Format Tanggal Lengkap (Contoh: KAMIS, 13 AGUSTUS 2026)
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('live-date').innerText = now.toLocaleDateString('id-ID', options);
         }
-        setInterval(updateClockAndDate, 1000);
+        
         updateClockAndDate();
+        setInterval(updateClockAndDate, 1000);
 
         let rawData = [];
 
-        // Fungsi Listener Firebase onValue untuk Dashboard
         onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
             const data = snap.val();
             let tm = 0, tb = 0, otw = 0; 
