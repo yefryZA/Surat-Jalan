@@ -610,7 +610,7 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
             
             <!-- Jenis Barang -->
             <div style="font-size: 15px; font-weight: bold; color: #00e5ff; margin-bottom: 6px; text-shadow: 0 0 5px rgba(0,229,255,0.2);">
-                MUAT ${i.barang ? i.barang.toUpperCase() : '-'}
+                MUATAN ${i.barang ? i.barang.toUpperCase() : '-'}
             </div>
 
             <!-- Sopir -->
@@ -635,7 +635,7 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
             ` : ''}
             
             <div style="font-size: 12px; margin-top: 8px; margin-bottom: 4px;">
-                <a href="${i.fotoM}" target="_blank" style="color:#4caf50; font-weight: bold; text-decoration: underline;">📄 FOTO MUAT</a> 
+                <a href="${i.fotoM}" target="_blank" style="color:#4caf50; font-weight: bold; text-decoration: underline;">📄 FOTO SAAT LOADING</a> 
                 ${i.fotoB ? `| <a href="${i.fotoB}" target="_blank" style="color:var(--gold); font-weight: bold; text-decoration: underline;">📄 FOTO BONGKAR</a>` : ''}
             </div>
         </div>
