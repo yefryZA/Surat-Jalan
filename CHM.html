@@ -634,18 +634,17 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
             </div>
             ` : ''}
             
-            <div style="font-size: 12px; margin-top: 8px; margin-bottom: 4px;">
-                <a href="${i.fotoM}" target="_blank" style="color:#4caf50; font-weight: bold;">📄 FOTO SAAT LOADING</a> 
-                ${i.fotoB ? `| <a href="${i.fotoB}" target="_blank" style="color:var(--gold); font-weight: bold;">📄 FOTO BONGKAR</a>` : ''}
-            </div>
-        </div>
-        
-        <div style="width: 100%; display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-top: 4px;">
-            ${statusElement}
-            <div style="width: 100%; text-align: center;">
-                ${getBadgeSelisih(i)}
-            </div>
-        </div>
+           <div style="font-size: 12px; margin-top: 8px; margin-bottom: 4px;">
+    <a href="${i.fotoM}" target="_blank" style="color:#4caf50; font-weight: bold; text-decoration: none;">📄 FOTO SAAT LOADING</a> 
+    ${i.fotoB ? `| <a href="${i.fotoB}" target="_blank" style="color:var(--gold); font-weight: bold; text-decoration: none;">📄 FOTO BONGKAR</a>` : ''}
+</div>
+
+<div style="width: 100%; display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-top: 4px;">
+    ${statusElement}
+    <div style="width: 100%; text-align: center;">
+        ${getBadgeSelisih(i)}
+    </div>
+</div>
 
     </div>`;
         });
