@@ -16,6 +16,70 @@
             padding: 20px;
         }
 
+        /* Styling Welcome Screen */
+        #welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #0b132b;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            gap: 20px;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .welcome-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .welcome-subtitle {
+            font-size: 16px;
+            color: #00e5ff;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+        }
+
+        .welcome-main-title {
+            font-size: 32px;
+            color: #ffd700;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+            letter-spacing: 1px;
+        }
+
+        .btn-masuk {
+            background: linear-gradient(135deg, #00e5ff, #00bcd4);
+            color: #0b132b;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 20px rgba(0, 229, 255, 0.4);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-masuk:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(0, 229, 255, 0.6);
+        }
+
         .view-container {
             display: none; 
             flex-direction: column;
@@ -336,6 +400,15 @@
 </head>
 <body>
 
+    <!-- Welcome Screen -->
+    <div id="welcome-screen">
+        <div class="welcome-title-group">
+            <span class="welcome-subtitle">MONITORING TRUCK</span>
+            <span class="welcome-main-title">PT. BERKAH BAJA STEEL</span>
+        </div>
+        <button id="btn-masuk-system" class="btn-masuk">MASUK SYSTEM</button>
+    </div>
+
     <!-- Tampilan Mode Cilegon -->
     <div id="view-cilegon" class="view-container">
         <h2>Dashboard Cilegon</h2>
@@ -386,13 +459,30 @@
         const db = getDatabase(app);
         const dbKey = "CHM";
 
-        // Pengaturan Mode Tampilan
-        const mode = new URLSearchParams(window.location.search).get('mode');
-        if(mode === 'cilegon') {
-            document.getElementById('view-cilegon').style.display = 'flex';
-        } else {
-            document.getElementById('view-dashboard').style.display = 'flex';
-        }
+        // Fungsi untuk Masuk System & Fullscreen
+        document.getElementById('btn-masuk-system').addEventListener('click', () => {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(err => {
+                    console.log("Fullscreen error:", err);
+                });
+            } else if (elem.webkitRequestFullscreen) { /* Safari */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE11 */
+                elem.msRequestFullscreen();
+            }
+
+            document.getElementById('welcome-screen').style.display = 'none';
+
+            const mode = new URLSearchParams(window.location.search).get('mode');
+            if(mode === 'cilegon') {
+                document.getElementById('view-cilegon').style.display = 'flex';
+            } else {
+                document.getElementById('view-dashboard').style.display = 'flex';
+            }
+        });
+
+        // Pengaturan Mode Tampilan (Hanya sembunyikan welcome screen jika auto-bukan dari klik, tapi karena pakai welcome screen kita biarkan welcome screen tampil dulu)
 
         // Fungsi Jam, Menit, Detik & Tanggal Real-Time
         function updateClockAndDate() {
