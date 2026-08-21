@@ -140,8 +140,9 @@
         </div>
     </div>
 
-    <!-- MODE INPUT CEKER (DENGAN INPUT TAMBAHAN PROJECT) -->
-   <div id="view-cilegon" class="container">
+<!-- MODE INPUT CEKER (DENGAN INPUT TAMBAHAN PROJECT) -->
+  <!-- 1. CONTAINER INPUT UTAMA CEKER -->
+<div id="view-cilegon" class="container">
     <div class="card">
         <h2 style="color:var(--green)">INPUT MUAT</h2>
         
@@ -162,38 +163,25 @@
             <input type="number" id="m-t" placeholder="T (m)" step="0.01" style="flex:1; padding:12px; border-radius:8px; border:1px solid #666; background:#1a1a1a; color:#ffffff; font-family:'Arial Black', sans-serif; font-weight:900; font-size:16px;">
         </div>
 
-        <!-- TOTAL VOLUME: Dibuat Kuning Cerah & Lebih Besar -->
+        <!-- TOTAL VOLUME -->
         <input type="number" id="m-vol" placeholder="TOTAL VOLUME (M3)" step="0.01" readonly style="background:#222; color:#ffd700; font-family:'Arial Black', sans-serif; font-weight:900; font-size:18px; border:2px dashed #ffd700;">
         
-        <label class="lbl">FOTO MUATAN</label>
-        <input type="file" capture="camera" id="m-foto">
-        
-              
-        <!-- HARGA MATERIAL: Font Arial Black Cerah -->
+        <!-- HARGA MATERIAL -->
         <label class="lbl" style="color:var(--gold); font-weight:bold;">⚙️ HARGA MATERIAL (RP)</label>
         <input type="text" id="m-ops-material" inputmode="numeric" pattern="[0-9]*" placeholder="0.00" style="border: 1px solid var(--gold); font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88; background: #111;" oninput="formatRupiahOtomatis(this)">
         
-        <!-- ONGKOS TRUK: Font Arial Black Cerah -->
+        <!-- ONGKOS TRUK -->
         <label class="lbl" style="color:var(--gold); font-weight:bold;">⚙️ ONGKOS TRUK (RP)</label>
         <input type="text" id="m-ops-mobil" inputmode="numeric" pattern="[0-9]*" placeholder="0.00" style="border: 1px solid var(--gold); margin-bottom:20px; font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88; background: #111;" oninput="formatRupiahOtomatis(this)">
 
         <button class="btn btn-green" onclick="prosesMuat()" style="font-family: 'Arial Black', sans-serif; font-size: 16px;">CETAK SURAT JALAN</button>
             
-            <div id="qr-canvas"></div>
-        </div>
+        <div id="qr-canvas"></div>
     </div>
+</div>
 
-    <div id="container-foto-asal" style="display:none; margin-top:15px; text-align:center;">
-        <div style="background: var(--light-dark); padding: 10px; border-radius: 12px; border: 1px dashed var(--gold);">
-            <p style="font-size: 11px; color: var(--gold); font-weight: bold; margin-bottom: 8px;">
-                📸 FOTO KONDISI MUAT (DARI ASAL)
-            </p>
-            <img id="img-muat-asal" src="" style="width: 100%; border-radius: 8px; border: 1px solid #333; cursor: pointer;" onclick="window.open(this.src)">
-            <p style="font-size: 9px; color: var(--slate); margin-top: 5px;">*Klik gambar untuk memperbesar</p>
-        </div>
-    </div>
-
-    <div id="modal-pengeluaran-global" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.75); overflow-y: auto;">
+<!-- 2. MODAL POPUP MANAJEMEN PENGELUARAN (SEKARANG TERSEMBUNYI OTOMATIS) -->
+<div id="modal-pengeluaran-global" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.75); overflow-y: auto;">
     <div style="background-color: #1a1a1a; color: white; margin: 12% auto; padding: 20px; border: 1px solid #333; width: 90%; max-width: 500px; border-radius: 10px; font-family: 'Poppins', sans-serif; box-shadow: 0 4px 25px rgba(0,0,0,0.6);">
         
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px;">
@@ -217,7 +205,7 @@
             <h4 style="margin: 0 0 10px 0; font-size: 12px; color: #00e5ff; font-weight: 600;">Rincian Pengeluaran:</h4>
             
             <div id="ops-list-popup" style="max-height: 180px; overflow-y: auto; background: #0f0f0f; padding: 10px; border-radius: 6px; border: 1px solid #222;">
-                </div>
+            </div>
         </div>
 
     </div>
@@ -263,54 +251,7 @@
         return `${jam} jam ${mnt} menit`;
     }
 
-    async function compressAndGetBase64(file) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const max_size = 800;
-                    if (width > height) {
-                        if (width > max_size) { height *= max_size / width; width = max_size; }
-                    } else {
-                        if (height > max_size) { width *= max_size / height; height = max_size; }
-                    }
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL("image/jpeg", 0.7).split(',')[1]);
-                };
-            };
-        });
-    }
-
-    async function uploadFoto(file, fileName) {
-        if(!file) return "";
-        document.getElementById('loader').style.display = 'flex';
-        document.getElementById('load-txt').innerText = "MENYUSUTKAN FOTO...";
-        const base64Sut = await compressAndGetBase64(file);
-        document.getElementById('load-txt').innerText = "MENGIRIM DATA (" + fileName.split('_')[0] + ")...";
-        try {
-            const res = await fetch(GAS_URL, { 
-                method: "POST", 
-                body: JSON.stringify({ base64: base64Sut, type: "image/jpeg", name: fileName }) 
-            });
-            const json = await res.json();
-            return json.url || "";
-        } catch (err) {
-            console.error("Gagal Upload:", err);
-            return "";
-        } finally {
-            document.getElementById('loader').style.display = 'none';
-        }
-    }
-
-// --- FUNGSI PEMBANTU: UBAH ANGKA BULAN KE ROMAWI ---
+ // --- FUNGSI PEMBANTU: UBAH ANGKA BULAN KE ROMAWI ---
 function getBulanRomawi(bulanAngka) {
     const romawi = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
     return romawi[bulanAngka - 1] || "I";
@@ -345,61 +286,61 @@ async function printSuratJalan(data) {
         const nomorSuratJalanLengkap = `${stringNomorUrut}/bbs/${bulanRomawi}/${tahunSekarang}`;
 
         // 3. Gambar Struktur HTML (Kotak nomor dirancang minimalis)
-     const printArea = document.createElement('div');
-    printArea.style = "width: 380px; padding: 20px; background: white; color: black; font-family: monospace; position: absolute; left: -9999px; top: 0;";
-    printArea.innerHTML = `
-    <div style="text-align: center; font-weight: bold; font-size: 18px;">PT. BERKAH BAJA STEEL</div>
-    <div style="text-align: center; font-size: 12px; font-weight: bold;">SUPLAY MATERIAL KE ${data.project || "LOSARANG"}</div>
-    <div style="text-align: center;">--------------------------------</div>
-    <div style="font-size: 14px; line-height: 1.5;">
-        <div style="font-family: monospace; width: 100%; font-size: 12px;">
-            
-            <table style="width: 100%; border-collapse: collapse; font-family: monospace; font-size: 12px; table-layout: fixed;">
-                <tr><td style="width: 75px;">TGL/JAM</td><td style="width: 15px;">:</td><td>${tgl} ‖ ${jam}</td></tr>
-                <tr><td>PLAT NO</td><td>:</td><td>${data.plat}</td></tr>
-                <tr><td>SOPIR</td><td>:</td><td>${data.sopir || "-"}</td></tr>
-                <tr><td>BARANG</td><td>:</td><td>${data.barang || "-"}</td></tr>
+        const printArea = document.createElement('div');
+        printArea.style = "width: 380px; padding: 20px; background: white; color: black; font-family: monospace; position: absolute; left: -9999px; top: 0;";
+        printArea.innerHTML = `
+        <div style="text-align: center; font-weight: bold; font-size: 18px;">PT. BERKAH BAJA STEEL</div>
+        <div style="text-align: center; font-size: 12px; font-weight: bold;">SUPLAY MATERIAL KE ${data.project || "LOSARANG"}</div>
+        <div style="text-align: center;">--------------------------------</div>
+        <div style="font-size: 14px; line-height: 1.5;">
+            <div style="font-family: monospace; width: 100%; font-size: 12px;">
                 
-               <tr>
-                    <td colspan="3" style="padding: 5px 0;">
-                        -----------------------------------------------<br>
-                        panjang : ${data.p||0} ‖ lebar : ${data.l||0} ‖ tinggi : ${data.t||0} (m)<br>
-                        -----------------------------------------------
-                    </td>
-                </tr>
+                <table style="width: 100%; border-collapse: collapse; font-family: monospace; font-size: 12px; table-layout: fixed;">
+                    <tr><td style="width: 75px;">TGL/JAM</td><td style="width: 15px;">:</td><td>${tgl} ‖ ${jam}</td></tr>
+                    <tr><td>PLAT NO</td><td>:</td><td>${data.plat}</td></tr>
+                    <tr><td>SOPIR</td><td>:</td><td>${data.sopir || "-"}</td></tr>
+                    <tr><td>BARANG</td><td>:</td><td>${data.barang || "-"}</td></tr>
+                    
+                    <tr>
+                        <td colspan="3" style="padding: 5px 0;">
+                            -----------------------------------------------<br>
+                            panjang : ${data.p||0} ‖ lebar : ${data.l||0} ‖ tinggi : ${data.t||0} (m)<br>
+                            -----------------------------------------------
+                        </td>
+                    </tr>
 
-                <tr><td>TOTAL MUAT</td><td>:</td><td><b>${data.volM || 0} M3</b></td></tr>
-            </table>
-            
-            <div style="text-align: center; padding: 8px 0; margin: 10px 0; border: 1px solid black; border-radius: 4px;">
-                <div style="font-size: 11px; color: #444; font-weight: bold; text-transform: uppercase;">Nomor Surat Jalan</div>
-                <div style="font-size: 18px; font-weight: bold; color: black; letter-spacing: 0.5px; font-family: monospace; margin-top: 4px;">
-                    ${nomorSuratJalanLengkap}
+                    <tr><td>TOTAL MUAT</td><td>:</td><td><b>${data.volM || 0} M3</b></td></tr>
+                </table>
+                
+                <div style="text-align: center; padding: 8px 0; margin: 10px 0; border: 1px solid black; border-radius: 4px;">
+                    <div style="font-size: 11px; color: #444; font-weight: bold; text-transform: uppercase;">Nomor Surat Jalan</div>
+                    <div style="font-size: 18px; font-weight: bold; color: black; letter-spacing: 0.5px; font-family: monospace; margin-top: 4px;">
+                        ${nomorSuratJalanLengkap}
+                    </div>
                 </div>
+
+                -----------------------------------------------<br>
+
+                <table style="width: 100%; font-family: monospace; font-size: 11px; text-align: center; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 50%; vertical-align: top;">Penerima,</td>
+                        <td style="width: 50%; vertical-align: top;">Mengetahui,</td>
+                    </tr>
+                    <tr>
+                        <td style="height: 50px; vertical-align: middle;"></td>
+                        <td style="height: 50px; vertical-align: middle;"></td>
+                    </tr>
+                    <tr>
+                        <td>( _________________ )</td>
+                        <td><b>H E R M A N</b><br>Kordinator Lapangan</td>
+                    </tr>
+                </table>
+                -----------------------------------------------<br>
+
+                <div style="text-align: center; font-size: 11px; margin-top: 15px;">⚓ JAGA NAMA BAIK DIRI SENDIRI DAN PERUSAHAAN ⚓</div>
+                <div style="text-align: center; font-size: 10px; margin-top:10px;">Hati-hati Pak Sopir, KELUARGA menunggu ANDA dirumah.</div>
             </div>
-
-            -----------------------------------------------<br>
-
-            <table style="width: 100%; font-family: monospace; font-size: 11px; text-align: center; border-collapse: collapse;">
-                <tr>
-                    <td style="width: 50%; vertical-align: top;">Penerima,</td>
-                    <td style="width: 50%; vertical-align: top;">Mengetahui,</td>
-                </tr>
-                <tr>
-                    <td style="height: 50px; vertical-align: middle;"></td>
-                    <td style="height: 50px; vertical-align: middle;"></td>
-                </tr>
-                <tr>
-                    <td>( _________________ )</td>
-                    <td><b>H E R M A N</b><br>Kordinator Lapangan</td>
-                </tr>
-            </table>
-            -----------------------------------------------<br>
-
-            <div style="text-align: center; font-size: 11px; margin-top: 15px;">⚓ JAGA NAMA BAIK DIRI SENDIRI DAN PERUSAHAAN ⚓</div>
-            <div style="text-align: center; font-size: 10px; margin-top:10px;">Hati-hati Pak Sopir, KELUARGA menunggu ANDA dirumah.</div>
-        </div>
-    </div>`;
+        </div>`;
 
         document.body.appendChild(printArea);
 
@@ -408,7 +349,7 @@ async function printSuratJalan(data) {
             html2canvas(printArea).then(canvas => {
                 const imageData = canvas.toDataURL("image/png");
                 const link = document.createElement('a');
-                link.download = `STRUK_${data.plat}_${data.id.substring(0,5)}.png`;
+                link.download = `STRUK_${data.plat}_${data.id ? data.id.substring(0,5) : '00000'}.png`;
                 link.href = imageData;
                 link.click();
                 
@@ -420,6 +361,8 @@ async function printSuratJalan(data) {
             });
         }, 1000);
 
+        return nomorSuratJalanLengkap; // Mengembalikan nomor surat jalan jika dibutuhkan di fungsi panggilannya
+
     } catch (error) {
         console.error("Error antrean Surat Jalan:", error);
         alert("Gagal memproses nomor surat jalan otomatis.");
@@ -427,83 +370,78 @@ async function printSuratJalan(data) {
 }
 
 window.prosesMuat = async () => {
-        const p = document.getElementById('m-plat').value.toUpperCase();
-        const s = document.getElementById('m-sopir').value.toUpperCase();
-        const b = document.getElementById('m-barang').value.toUpperCase();
-        const v = document.getElementById('m-vol').value;
-        const fS = document.getElementById('m-foto').files[0];
-        
-        const p_dim = document.getElementById('m-p').value;
-        const l_dim = document.getElementById('m-l').value;
-        const t_dim = document.getElementById('m-t').value;
-        const proj = document.getElementById('m-project').value.toUpperCase();
-        
-        // 1. TANGKAP INPUT BOP BARU DARI CEKER
-        const rawMaterial = document.getElementById('m-ops-material').value;
-        const rawMobil = document.getElementById('m-ops-mobil').value;
-        
-        // VALIDASI: Pastikan semua data terisi, termasuk BOP Harga Material & Ongkos Mobil
-        if(!p || !s || !b || !v || !fS || !p_dim || !l_dim || !t_dim || !proj || !rawMaterial || !rawMobil) {
-            return alert("LENGKAPI SEMUA DATA termasuk PROJECT TUJUAN & BIAYA BOP!");
-        }
-        
-        document.getElementById('load-txt').innerText = "MENYIMPAN DATA...";
-        document.getElementById('loader').style.display = 'flex';
-
-        // 2. BERSIHKAN EKSTREMI TITIK RUPIAH MENJADI ANGKA MURNI
-        const hargaMaterial = Number(rawMaterial.replace(/[^0-9]/g, ''));
-        const hargaMobil = Number(rawMobil.replace(/[^0-9]/g, ''));
-        const totalBopSatuUnit = hargaMaterial + hargaMobil;
-
-        const uS = await uploadFoto(fS, `MUAT_${p}.jpg`);
-       
-        
-        const newRef = push(ref(db, `bbs_logs/${dbKey}`));
-        const logData = { 
-            plat: p, 
-            sopir: s, 
-            barang: b, 
-            project: proj, 
-            p: Number(p_dim), 
-            l: Number(l_dim), 
-            t: Number(t_dim),
-            volM: Number(v), 
-            volB: 0, 
-            
-            // 3. LOGIKA BARU: Status langsung diset 'OTW' karena BOP sudah dikunci di awal
-            status: 'OTW', 
-            
-            // 4. STRUKTUR FINANSIAL BARU: Menyimpan rincian BOP langsung dari Ceker
-            bop_material: hargaMaterial,
-            bop_mobil: hargaMobil,
-            bop_unit: totalBopSatuUnit, // Total gabungan tetap masuk ke field utama
-            
-            fotoM: uS,           
-            tgl: new Date().toLocaleDateString('id-ID'),
-            jamM: new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', hour12: false}) 
-        };
-        
-        await set(newRef, logData);
-        printSuratJalan({ ...logData, id: newRef.key });
+    const p = document.getElementById('m-plat').value.toUpperCase();
+    const s = document.getElementById('m-sopir').value.toUpperCase();
+    const b = document.getElementById('m-barang').value.toUpperCase();
+    const v = document.getElementById('m-vol').value;
+    
+    const p_dim = document.getElementById('m-p').value;
+    const l_dim = document.getElementById('m-l').value;
+    const t_dim = document.getElementById('m-t').value;
+    const proj = document.getElementById('m-project').value.toUpperCase();
+    
+    // 1. TANGKAP INPUT BOP BARU DARI CEKER
+    const rawMaterial = document.getElementById('m-ops-material').value;
+    const rawMobil = document.getElementById('m-ops-mobil').value;
+    
+    // VALIDASI: Pastikan semua data terisi (tanpa pengecekan foto)
+    if(!p || !s || !b || !v || !p_dim || !l_dim || !t_dim || !proj || !rawMaterial || !rawMobil) {
+        return alert("LENGKAPI SEMUA DATA termasuk PROJECT TUJUAN & BIAYA BOP!");
     }
     
-    let rawData = [];
-    let totalOps = 0;
+    document.getElementById('load-txt').innerText = "MENYIMPAN DATA...";
+    document.getElementById('loader').style.display = 'flex';
 
-    function getBadgeSelisih(i) {
-        const statusMobil = (i.status || "").toUpperCase();
-        // Badge selisih disesuaikan agar muncul ketika statusnya sudah OTW atau DONE
-        if (statusMobil === 'DONE' || statusMobil === 'OTW') {
-            const diff = (i.volB || 0) - (i.volM || 0);
-            const warna = diff < 0 ? '#ff4d4d' : '#2ecc71'; 
-            const tanda = diff > 0 ? '+' : '';
-            
-            return `<b style="color: ${warna}; margin-left: 8px; font-size: 13px; text-shadow: 1px 1px 1px rgba(0,0,0,0.1);">
-                        (${tanda}${diff.toFixed(2)})
-                    </b>`;
-        }
-        return "";
+    // 2. BERSIHKAN EKSTREMI TITIK RUPIAH MENJADI ANGKA MURNI
+    const hargaMaterial = Number(rawMaterial.replace(/[^0-9]/g, ''));
+    const hargaMobil = Number(rawMobil.replace(/[^0-9]/g, ''));
+    const totalBopSatuUnit = hargaMaterial + hargaMobil;
+
+    const newRef = push(ref(db, `bbs_logs/${dbKey}`));
+    const logData = { 
+        plat: p, 
+        sopir: s, 
+        barang: b, 
+        project: proj, 
+        p: Number(p_dim), 
+        l: Number(l_dim), 
+        t: Number(t_dim),
+        volM: Number(v), 
+        volB: 0, 
+        
+        // 3. LOGIKA BARU: Status langsung diset 'OTW' karena BOP sudah dikunci di awal
+        status: 'OTW', 
+        
+        // 4. STRUKTUR FINANSIAL BARU: Menyimpan rincian BOP langsung dari Ceker
+        bop_material: hargaMaterial,
+        bop_mobil: hargaMobil,
+        bop_unit: totalBopSatuUnit,
+        
+        fotoM: "", // Diisi kosong karena input foto sudah dihapus
+        tgl: new Date().toLocaleDateString('id-ID'),
+        jamM: new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', hour12: false}) 
+    };
+    
+    await set(newRef, logData);
+    printSuratJalan({ ...logData, id: newRef.key });
+}
+
+let rawData = [];
+let totalOps = 0;
+
+function getBadgeSelisih(i) {
+    const statusMobil = (i.status || "").toUpperCase();
+    if (statusMobil === 'DONE' || statusMobil === 'OTW') {
+        const diff = (i.volB || 0) - (i.volM || 0);
+        const warna = diff < 0 ? '#ff4d4d' : '#2ecc71'; 
+        const tanda = diff > 0 ? '+' : '';
+        
+        return `<b style="color: ${warna}; margin-left: 8px; font-size: 13px; text-shadow: 1px 1px 1px rgba(0,0,0,0.1);">
+                    (${tanda}${diff.toFixed(2)})
+                </b>`;
     }
+    return "";
+}
 
 // --- RENDER DASHBOARD ---
 onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
@@ -516,7 +454,7 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
     // Ambil nilai counter terbaru dari Firebase (bbs_counter_sj)
     let counterSjRef = ref(db, `bbs_counter_sj/${dbKey}`);
     let counterSnap = await get(counterSjRef);
-    let currentCounter = counterSnap.exists() ? Number(counterSnap.val()) : 70; // Default ke 70 jika belum ada
+    let currentCounter = counterSnap.exists() ? Number(counterSnap.val()) : 70;
 
     if(data) {
         const romawiBulan = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
@@ -529,31 +467,24 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
         
         keys.forEach((k, index) => {
             const i = data[k];
-            
-            // Konversi status ke huruf besar semua agar aman dari error pengetikan ceker
             const statusMobil = (i.status || "").toUpperCase();
             
             if(statusMobil === 'ARCHIVED') return;
 
             tm += i.volM; tb += i.volB; 
             
-            // Menyisipkan id unik firebase ke data objek lokal
             rawData.push({ ...i, firebaseKey: k });
             
-            // Siapkan element untuk status / tombol aksi sesuai LOGIKA BARU PT.BBS
             let statusElement = "";
 
             if(statusMobil === 'OTW') {
                 otw++;
-            
                 statusElement = `
                     <button onclick="openOtwManager('${k}', '${i.plat}')" style="background:#FF9800; color:white; border:none; padding:8px 16px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; font-family:'Orbitron'; width: 100%; text-align: center;">
                         ${statusMobil} ( PROSES BONGKAR )
                     </button>
                 `;
-               
             } else {
-                // Status lainnya (misal DONE dll)
                 statusElement = `
                     <span class="badge" style="background:#4CAF50; padding:6px 12px; border-radius:4px; font-size:11px; font-weight:bold; display: block; width: 100%; text-align: center; color: white;">
                         ✅ ${i.status}
@@ -561,7 +492,6 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
                 `;
             }
 
-            // Ambil nomor surat jalan dari data, jika tidak ada, estimasikan mundur dari counter utama Firebase
             let nomorSuratJalanLengkap = i.noSuratJalan || i.nomor_surat_jalan || i.surat_jalan || i.no_sj;
             
             if (!nomorSuratJalanLengkap || nomorSuratJalanLengkap === '-' || nomorSuratJalanLengkap.includes('000/bbs')) {
@@ -571,7 +501,6 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
                 nomorSuratJalanLengkap = `${stringNomorUrut}/bbs/${bulanRomawi}/${tahunSekarang}`;
             }
             
-            // Gabungkan jam muat dan tanggal (contoh: 12.30 ※ 5/8/2026)
             const jamMuat = i.jamM || i.jam_muat || i.jam || '';
             const tglMuat = i.tgl || i.tglM || i.tanggal || '-';
             const infoWaktu = jamMuat ? `${jamMuat} ※ ${tglMuat}` : tglMuat;
@@ -618,9 +547,15 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
                 PENGEMUDI : <span style="color: #00e5ff;">${i.sopir}</span>
             </div>
 
-            <!-- BOP Unit -->
-            <div style="font-size: 15px; font-weight: bold; margin-bottom: 4px; color: var(--gold);">
-                💰 BOP : RP ${(i.bop_unit || 0).toLocaleString('id-ID')}
+            <!-- BOP Unit & Edit Ongkos Mobil -->
+            <div style="font-size: 15px; font-weight: bold; margin-bottom: 4px; color: var(--gold); display: flex; align-items: center; justify-content: space-between;">
+                <span>💰 BOP : RP ${(i.bop_unit || 0).toLocaleString('id-ID')}</span>
+                <button onclick="editBopMobil('${k}', ${i.bop_material || 0}, ${i.bop_mobil || 0})" style="background: rgba(255, 215, 0, 0.2); color: var(--gold); border: 1px solid var(--gold); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">
+                    ✏️ Edit Mobil
+                </button>
+            </div>
+            <div style="font-size: 11px; color: #aaa; margin-top: -2px; margin-bottom: 6px;">
+                (Mat: Rp ${(i.bop_material || 0).toLocaleString('id-ID')} | Mobil: Rp ${(i.bop_mobil || 0).toLocaleString('id-ID')})
             </div>
 
             <!-- 4. Harga Jual Tambahan di Bawah BOP -->
@@ -634,17 +569,18 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
             </div>
             ` : ''}
             
-           <div style="font-size: 12px; margin-top: 8px; margin-bottom: 4px;">
-    <a href="${i.fotoM}" target="_blank" style="color:#4caf50; font-weight: bold; text-decoration: none;">📄 FOTO SAAT LOADING</a> 
-    ${i.fotoB ? `| <a href="${i.fotoB}" target="_blank" style="color:var(--gold); font-weight: bold; text-decoration: none;">📄 FOTO BONGKAR</a>` : ''}
-</div>
+            <!-- Link Foto conditionally disajikan -->
+            <div style="font-size: 12px; margin-top: 8px; margin-bottom: 4px;">
+                ${i.fotoM ? `<a href="${i.fotoM}" target="_blank" style="color:#4caf50; font-weight: bold; text-decoration: none;">📄 FOTO SAAT LOADING</a>` : ''} 
+                ${i.fotoB ? `${i.fotoM ? '| ' : ''}<a href="${i.fotoB}" target="_blank" style="color:var(--gold); font-weight: bold; text-decoration: none;">📄 FOTO BONGKAR</a>` : ''}
+            </div>
 
-<div style="width: 100%; display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-top: 4px;">
-    ${statusElement}
-    <div style="width: 100%; text-align: center;">
-        ${getBadgeSelisih(i)}
-    </div>
-</div>
+            <div style="width: 100%; display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-top: 4px;">
+                ${statusElement}
+                <div style="width: 100%; text-align: center;">
+                    ${getBadgeSelisih(i)}
+                </div>
+            </div>
 
     </div>`;
         });
@@ -1271,6 +1207,45 @@ window.formatInputRibuan = (inputan) => {
         inputan.value = Number(nilai).toLocaleString('en-US'); // Pakai 'en-US' untuk koma (,), atau 'id-ID' jika ingin titik (.)
     } else {
         inputan.value = "";
+    }
+};
+
+// --- FUNGSI UPDATE BOP MOBIL & HITUNG ULANG TOTAL BOP ---
+window.editBopMobil = async (firebaseKey, bopMaterialLama, bopMobilLama) => {
+    // 1. Minta input ongkos mobil baru dari pengguna
+    const inputMobilBaru = prompt("Masukkan Ongkos Mobil (BOP Mobil) baru (Rp):", bopMobilLama);
+    
+    // Jika batal (Cancel) atau input kosong
+    if (inputMobilBaru === null || inputMobilBaru.trim() === "") return;
+
+    // 2. Bersihkan input dari format non-angka
+    const bopMobilBaru = Number(inputMobilBaru.replace(/[^0-9]/g, ''));
+    
+    if (isNaN(bopMobilBaru)) {
+        return alert("Nominal yang dimasukkan tidak valid!");
+    }
+
+    // 3. Hitung Total BOP Unit baru (Material + Ongkos Mobil Baru)
+    const bopMaterial = Number(bopMaterialLama) || 0;
+    const totalBopBaru = bopMaterial + bopMobilBaru;
+
+    try {
+        document.getElementById('loader').style.display = 'flex';
+        document.getElementById('load-txt').innerText = "MENGUPDATE BOP...";
+
+        // 4. Update ke Firebase Database
+        const targetRef = ref(db, `bbs_logs/${dbKey}/${firebaseKey}`);
+        await update(targetRef, {
+            bop_mobil: bopMobilBaru,
+            bop_unit: totalBopBaru
+        });
+
+        alert("Berhasil memperbarui Ongkos Mobil & Total BOP!");
+    } catch (err) {
+        console.error("Gagal update BOP:", err);
+        alert("Gagal memperbarui data BOP ke database.");
+    } finally {
+        document.getElementById('loader').style.display = 'none';
     }
 };
     
