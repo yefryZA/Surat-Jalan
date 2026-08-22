@@ -140,8 +140,6 @@
         </div>
     </div>
 
-<!-- MODE INPUT CEKER (DENGAN INPUT TAMBAHAN PROJECT) -->
-  <!-- 1. CONTAINER INPUT UTAMA CEKER -->
 <div id="view-cilegon" class="container">
     <div class="card">
         <h2 style="color:var(--green)">INPUT MUAT</h2>
@@ -154,7 +152,8 @@
         <input type="text" id="m-project" placeholder="PROJECT" style="font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 16px; color: #ffffff;">
         
         <label class="lbl">DETAIL MUATAN</label>
-        <input type="text" id="m-barang" placeholder="MUATAN" style="font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 16px; color: #ffffff;">
+        <!-- Ditambahkan event oninput untuk update label otomatis -->
+        <input type="text" id="m-barang" placeholder="MUATAN" oninput="updateLabelDynamic()" style="font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 16px; color: #ffffff;">
 
         <!-- P, L, T Dibuat Tebal & Kontras -->
         <div style="display:flex; gap:5px; margin-bottom:10px;">
@@ -166,12 +165,12 @@
         <!-- TOTAL VOLUME -->
         <input type="number" id="m-vol" placeholder="TOTAL VOLUME (M3)" step="0.01" readonly style="background:#222; color:#ffd700; font-family:'Arial Black', sans-serif; font-weight:900; font-size:18px; border:2px dashed #ffd700;">
         
-        <!-- HARGA MATERIAL -->
-        <label class="lbl" style="color:var(--gold); font-weight:bold;">⚙️ HARGA MATERIAL (RP)</label>
+        <!-- HARGA MATERIAL (Label berubah otomatis berdasarkan muatan) -->
+        <label class="lbl" id="lbl-mat" style="color:var(--gold); font-weight:bold;">⚙️ HARGA MATERIAL / M³ (RP)</label>
         <input type="text" id="m-ops-material" inputmode="numeric" pattern="[0-9]*" placeholder="0.00" style="border: 1px solid var(--gold); font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88; background: #111;" oninput="formatRupiahOtomatis(this)">
         
-        <!-- ONGKOS TRUK -->
-        <label class="lbl" style="color:var(--gold); font-weight:bold;">⚙️ ONGKOS TRUK (RP)</label>
+        <!-- ONGKOS TRUK / MOBIL -->
+        <label class="lbl" style="color:var(--gold); font-weight:bold;">⚙️ ONGKOS TRUK / M³ (RP)</label>
         <input type="text" id="m-ops-mobil" inputmode="numeric" pattern="[0-9]*" placeholder="0.00" style="border: 1px solid var(--gold); margin-bottom:20px; font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88; background: #111;" oninput="formatRupiahOtomatis(this)">
 
         <button class="btn btn-green" onclick="prosesMuat()" style="font-family: 'Arial Black', sans-serif; font-size: 16px;">CETAK SURAT JALAN</button>
@@ -369,22 +368,34 @@ async function printSuratJalan(data) {
     }
 }
 
+// --- FUNGSI MENGUBAH LABEL BANTUAN SECARA REALTIME ---
+function updateLabelDynamic() {
+    const barang = document.getElementById('m-barang').value.toUpperCase().trim();
+    const lblMat = document.getElementById('lbl-mat');
+    
+    if (barang === 'ABU BATU') {
+        lblMat.innerText = "⚙️ HARGA MATERIAL TOTAL / MOBIL (RP)";
+    } else {
+        lblMat.innerText = "⚙️ HARGA MATERIAL / M³ (RP)";
+    }
+}
+
+// --- FUNGSI PROSES MUAT DENGAN KALKULASI DINAMIS ---
 window.prosesMuat = async () => {
-    const p = document.getElementById('m-plat').value.toUpperCase();
-    const s = document.getElementById('m-sopir').value.toUpperCase();
-    const b = document.getElementById('m-barang').value.toUpperCase();
-    const v = document.getElementById('m-vol').value;
+    const p = document.getElementById('m-plat').value.toUpperCase().trim();
+    const s = document.getElementById('m-sopir').value.toUpperCase().trim();
+    const b = document.getElementById('m-barang').value.toUpperCase().trim();
+    const v = Number(document.getElementById('m-vol').value) || 0;
     
     const p_dim = document.getElementById('m-p').value;
     const l_dim = document.getElementById('m-l').value;
     const t_dim = document.getElementById('m-t').value;
-    const proj = document.getElementById('m-project').value.toUpperCase();
+    const proj = document.getElementById('m-project').value.toUpperCase().trim();
     
-    // 1. TANGKAP INPUT BOP BARU DARI CEKER
     const rawMaterial = document.getElementById('m-ops-material').value;
     const rawMobil = document.getElementById('m-ops-mobil').value;
     
-    // VALIDASI: Pastikan semua data terisi (tanpa pengecekan foto)
+    // VALIDASI
     if(!p || !s || !b || !v || !p_dim || !l_dim || !t_dim || !proj || !rawMaterial || !rawMobil) {
         return alert("LENGKAPI SEMUA DATA termasuk PROJECT TUJUAN & BIAYA BOP!");
     }
@@ -392,10 +403,25 @@ window.prosesMuat = async () => {
     document.getElementById('load-txt').innerText = "MENYIMPAN DATA...";
     document.getElementById('loader').style.display = 'flex';
 
-    // 2. BERSIHKAN EKSTREMI TITIK RUPIAH MENJADI ANGKA MURNI
-    const hargaMaterial = Number(rawMaterial.replace(/[^0-9]/g, ''));
-    const hargaMobil = Number(rawMobil.replace(/[^0-9]/g, ''));
-    const totalBopSatuUnit = hargaMaterial + hargaMobil;
+    // Parse nilai angka murni dari input Ceker
+    const inputHargaMaterial = Number(rawMaterial.replace(/[^0-9]/g, ''));
+    const inputHargaMobilPerKubik = Number(rawMobil.replace(/[^0-9]/g, ''));
+
+    // 1. HITUNG HARGA MATERIAL
+    let totalHargaMaterial = 0;
+    if (b === 'ABU BATU') {
+        // Jika Abu Batu, dihitung langsung per mobil
+        totalHargaMaterial = inputHargaMaterial;
+    } else {
+        // Selain Abu Batu, perkalian harga per m3 * volume
+        totalHargaMaterial = inputHargaMaterial * v;
+    }
+
+    // 2. HITUNG ONGKOS MOBIL (Selalu Perkalian harga per m3 * volume)
+    const totalHargaMobil = inputHargaMobilPerKubik * v;
+
+    // 3. HITUNG TOTAL BOP UNIT
+    const totalBopSatuUnit = totalHargaMaterial + totalHargaMobil;
 
     const newRef = push(ref(db, `bbs_logs/${dbKey}`));
     const logData = { 
@@ -406,25 +432,28 @@ window.prosesMuat = async () => {
         p: Number(p_dim), 
         l: Number(l_dim), 
         t: Number(t_dim),
-        volM: Number(v), 
+        volM: v, 
         volB: 0, 
         
-        // 3. LOGIKA BARU: Status langsung diset 'OTW' karena BOP sudah dikunci di awal
         status: 'OTW', 
         
-        // 4. STRUKTUR FINANSIAL BARU: Menyimpan rincian BOP langsung dari Ceker
-        bop_material: hargaMaterial,
-        bop_mobil: hargaMobil,
+        // Simpan Hasil Akhir Setelah Perkalian
+        bop_material: totalHargaMaterial,
+        bop_mobil: totalHargaMobil,
         bop_unit: totalBopSatuUnit,
         
-        fotoM: "", // Diisi kosong karena input foto sudah dihapus
+        // Opsional: Menyimpan pula tarif dasar per m3 untuk audit/rekapan
+        rate_material_input: inputHargaMaterial,
+        rate_mobil_input: inputHargaMobilPerKubik,
+        
+        fotoM: "",
         tgl: new Date().toLocaleDateString('id-ID'),
         jamM: new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', hour12: false}) 
     };
     
     await set(newRef, logData);
     printSuratJalan({ ...logData, id: newRef.key });
-}
+};
 
 let rawData = [];
 let totalOps = 0;
