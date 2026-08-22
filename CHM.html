@@ -332,7 +332,7 @@ async function printSuratJalan(data) {
                     </tr>
                     <tr>
                         <td>( _________________ )</td>
-                        <td><b>F A W W A Z</b><br>Kordinator Lapangan</td>
+                        <td><b>H E R M A N</b><br>Kordinator Lapangan</td>
                     </tr>
                 </table>
                 -----------------------------------------------<br>
@@ -558,13 +558,13 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
                 (Mat: Rp ${(i.bop_material || 0).toLocaleString('id-ID')} | Mobil: Rp ${(i.bop_mobil || 0).toLocaleString('id-ID')})
             </div>
 
-            <!-- 4. Harga Jual Tambahan di Bawah BOP -->
+          <!-- 4. Harga Jual Tambahan di Bawah BOP -->
             <div style="font-size: 15px; font-weight: bold; margin-bottom: 6px; color: #00e5ff;">
                 🏷️ HARGA JUAL : RP ${(i.harga_jual || i.hargaJual || i.harga || 0).toLocaleString('id-ID')}
             </div>
             
-            ${i.margin_per_unit ? `
-            <div style="font-size: 15px; font-weight: bold; margin-bottom: 8px; color: #2ecc71;">
+            ${(i.margin_per_unit !== undefined && i.margin_per_unit !== null) ? `
+            <div style="font-size: 15px; font-weight: bold; margin-bottom: 8px; color: ${i.margin_per_unit < 0 ? '#ff4d4d' : '#2ecc71'};">
                 📈 MARGIN : RP ${i.margin_per_unit.toLocaleString('id-ID')}
             </div>
             ` : ''}
@@ -1210,40 +1210,58 @@ window.formatInputRibuan = (inputan) => {
     }
 };
 
-// --- FUNGSI UPDATE BOP MOBIL & HITUNG ULANG TOTAL BOP ---
+// --- FUNGSI UPDATE BOP MOBIL, TOTAL BOP & MARGIN ---
 window.editBopMobil = async (firebaseKey, bopMaterialLama, bopMobilLama) => {
-    // 1. Minta input ongkos mobil baru dari pengguna
+    // 1. Ambil data item saat ini dari rawData lokal
+    const currentItem = rawData.find(item => item.firebaseKey === firebaseKey);
+    if (!currentItem) return alert("Data tidak ditemukan!");
+
+    // 2. Minta input ongkos mobil baru dari pengguna
     const inputMobilBaru = prompt("Masukkan Ongkos Mobil (BOP Mobil) baru (Rp):", bopMobilLama);
     
     // Jika batal (Cancel) atau input kosong
     if (inputMobilBaru === null || inputMobilBaru.trim() === "") return;
 
-    // 2. Bersihkan input dari format non-angka
+    // 3. Bersihkan input dari format non-angka
     const bopMobilBaru = Number(inputMobilBaru.replace(/[^0-9]/g, ''));
     
     if (isNaN(bopMobilBaru)) {
         return alert("Nominal yang dimasukkan tidak valid!");
     }
 
-    // 3. Hitung Total BOP Unit baru (Material + Ongkos Mobil Baru)
+    // 4. Hitung Total BOP Unit baru (Material + Ongkos Mobil Baru)
     const bopMaterial = Number(bopMaterialLama) || 0;
     const totalBopBaru = bopMaterial + bopMobilBaru;
 
+    // 5. Ambil Harga Jual yang tersimpan di Firebase (cek berbagai variasi key)
+    const hargaJual = Number(currentItem.harga_jual || currentItem.hargaJual || currentItem.harga || 0);
+
+    // 6. Hitung Margin Per Unit Baru (Harga Jual - Total BOP Baru)
+    const marginBaru = hargaJual - totalBopBaru;
+
     try {
         document.getElementById('loader').style.display = 'flex';
-        document.getElementById('load-txt').innerText = "MENGUPDATE BOP...";
+        document.getElementById('load-txt').innerText = "MENGUPDATE BOP & MARGIN...";
 
-        // 4. Update ke Firebase Database
+        // 7. Update ke Firebase Database
         const targetRef = ref(db, `bbs_logs/${dbKey}/${firebaseKey}`);
-        await update(targetRef, {
+        
+        const updateData = {
             bop_mobil: bopMobilBaru,
             bop_unit: totalBopBaru
-        });
+        };
 
-        alert("Berhasil memperbarui Ongkos Mobil & Total BOP!");
+        // Jika data sebelumnya memiliki properti margin_per_unit / harga jual, update nilainya
+        if (hargaJual > 0 || currentItem.hasOwnProperty('margin_per_unit')) {
+            updateData.margin_per_unit = marginBaru;
+        }
+
+        await update(targetRef, updateData);
+
+        alert("Berhasil memperbarui Ongkos Mobil, Total BOP, dan Margin!");
     } catch (err) {
         console.error("Gagal update BOP:", err);
-        alert("Gagal memperbarui data BOP ke database.");
+        alert("Gagal memperbarui data ke database.");
     } finally {
         document.getElementById('loader').style.display = 'none';
     }
