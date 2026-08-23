@@ -94,17 +94,25 @@
 
     <div style="display: flex; align-items: stretch; justify-content: space-between; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
         
-        <div class="otw-container" style="flex: 1; min-width: 220px; margin: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 12px; min-height: 60px;">
+        <!-- TRUCK DALAM PERJALANAN -->
+        <div class="otw-container" style="flex: 1; min-width: 200px; margin: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 12px; min-height: 60px;">
             <span class="lbl" style="color:#fff; margin: 0; font-size: 11px;">TRUCK DALAM PERJALANAN</span>
             <span id="d-count-otw" class="otw-val" style="line-height: 1; margin-top: 4px;">0</span>
         </div>
 
-        <button class="btn" style="background:#e74c3c; color:#ffffff; font-weight:bold; font-family:'Orbitron'; font-size: 11px; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; flex: 1; min-width: 220px; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 60px;" onclick="window.openPopUpPengeluaran()">
+        <!-- TOMBOL PENGELUARAN -->
+        <button class="btn" style="background:#e74c3c; color:#ffffff; font-weight:bold; font-family:'Orbitron'; font-size: 11px; padding: 12px 15px; border: none; border-radius: 8px; cursor: pointer; flex: 1; min-width: 180px; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 60px;" onclick="window.openPopUpPengeluaran()">
             💸 PENGELUARAN
         </button>
 
-        <button class="btn" style="background:#2ecc71; color:#000000; font-weight:bold; font-family:'Orbitron'; font-size: 12px; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; flex: 1; min-width: 220px; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 60px;" onclick="window.generatePDFKeseluruhan()">
-            📊 PDF
+        <!-- TOMBOL PDF HARIAN -->
+        <button class="btn" style="background:#2ecc71; color:#000000; font-weight:bold; font-family:'Orbitron'; font-size: 12px; padding: 12px 15px; border: none; border-radius: 8px; cursor: pointer; flex: 1; min-width: 180px; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 60px;" onclick="window.generatePDFKeseluruhan()">
+            📊 PDF HARIAN
+        </button>
+
+        <!-- TOMBOL BARU: GENERATE 100 RIT (DILENGKAPI KODE PIN) -->
+        <button class="btn" style="background:#f1c40f; color:#000000; font-weight:bold; font-family:'Orbitron'; font-size: 11px; padding: 12px 15px; border: none; border-radius: 8px; cursor: pointer; flex: 1; min-width: 180px; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 60px;" onclick="window.konfirmasiGenerate100Rit()">
+            📦 GENERATE 100 RIT
         </button>
         
     </div>
@@ -331,7 +339,7 @@ async function printSuratJalan(data) {
                     </tr>
                     <tr>
                         <td>( _________________ )</td>
-                        <td><b>H E R M A N</b><br>Kordinator Lapangan</td>
+                        <td><b>F A W A Z</b><br>Kordinator Lapangan</td>
                     </tr>
                 </table>
                 -----------------------------------------------<br>
@@ -498,7 +506,7 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
             const i = data[k];
             const statusMobil = (i.status || "").toUpperCase();
             
-            if(statusMobil === 'ARCHIVED') return;
+            if(statusMobil === 'ARCHIVE') return;
 
             tm += i.volM; tb += i.volB; 
             
@@ -632,32 +640,38 @@ async function hitungUang(tb, jumlahMobil = 0) {
     // 1. Ambil elemen list operasional di layar dashboard
     const oList = document.getElementById('ops-list'); 
     
-    // 2. Cek: Jika elemen list ada di layar, gambar daftarnya
     if(oList) {
         oList.innerHTML = "";
         if(snapOps.val()) {
             Object.keys(snapOps.val()).forEach(k => {
                 const o = snapOps.val()[k]; 
-                totalOpsLocal += Number(o.nom);
-                oList.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px;">
-                        <span>- ${o.ket}</span>
-                        <span>RP ${o.nom.toLocaleString()} 
-                            <b onclick="delOps('${k}')" style="color:red; cursor:pointer; margin-left:5px;">X</b>
-                        </span>
-                    </div>`;
+                // FILTER: Hanya hitung & tampilkan yang statusnya masih 'ACTIVE'
+                const statusOps = (o.status || 'ACTIVE').toUpperCase();
+                if (statusOps === 'ACTIVE') {
+                    totalOpsLocal += Number(o.nom) || 0;
+                    oList.innerHTML += `
+                        <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px;">
+                            <span>- ${o.ket}</span>
+                            <span>RP ${(Number(o.nom) || 0).toLocaleString()} 
+                                <b onclick="delOps('${k}')" style="color:red; cursor:pointer; margin-left:5px;">X</b>
+                            </span>
+                        </div>`;
+                }
             });
         }
     } else {
-        // Jika diakses dari halaman non-admin (tidak ada oList), tetap hitung total nominalnya
+        // Jika diakses dari halaman non-admin (tidak ada oList), tetap hitung total nominal ACTIVE
         if(snapOps.val()) {
             Object.values(snapOps.val()).forEach(o => { 
-                totalOpsLocal += Number(o.nom); 
+                const statusOps = (o.status || 'ACTIVE').toUpperCase();
+                if (statusOps === 'ACTIVE') {
+                    totalOpsLocal += Number(o.nom) || 0; 
+                }
             });
         }
     }
 
-    // 🚀 PENTING: Mengirimkan hasil total pengeluaran agar bisa dipakai di fungsi lain/PDF
+    // 🚀 PENTING: Mengirimkan hasil total pengeluaran harian yang aktif
     return totalOpsLocal;
 }
 
@@ -744,7 +758,6 @@ window.prosesTugasSelesai = async () => {
         alert("PROSES DATA & CETAK PDF SELESAI!");
         closeOtwManager();
 
-           
         location.reload();
     } catch (e) {
         alert("Gagal memproses data: " + e.message);
@@ -765,20 +778,31 @@ window.openPopUpPengeluaran = async () => {
             let dataOps = snap.val();
             
             if(dataOps) {
+                let adaDataActive = false;
                 Object.keys(dataOps).forEach(k => {
                     const o = dataOps[k];
-                    popupList.innerHTML += `
-                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding: 6px 0; border-bottom: 1px solid #222; font-family: 'Poppins', sans-serif;">
-                            <span style="color:#ddd;">
-                                <small style="color:#aaa; margin-right:5px;">[${o.tgl || '-'}]</small> 
-                                ${o.ket}
-                            </span>
-                            <span style="color: #ff7675; font-weight:bold;">
-                                RP ${Number(o.nom).toLocaleString('id-ID')} 
-                                <b onclick="window.delOpsPopup('${k}')" style="color:#ff5252; cursor:pointer; margin-left:10px; background:rgba(255,82,82,0.1); padding:2px 6px; border-radius:4px; font-weight:bold;">X</b>
-                            </span>
-                        </div>`;
+                    const statusOps = (o.status || 'ACTIVE').toUpperCase();
+                    
+                    // HANYA TAMPILKAN PENGELUARAN YANG BERSTATUS ACTIVE
+                    if (statusOps === 'ACTIVE') {
+                        adaDataActive = true;
+                        popupList.innerHTML += `
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding: 6px 0; border-bottom: 1px solid #222; font-family: 'Poppins', sans-serif;">
+                                <span style="color:#ddd;">
+                                    <small style="color:#aaa; margin-right:5px;">[${o.tgl || '-'}]</small> 
+                                    ${o.ket}
+                                </span>
+                                <span style="color: #ff7675; font-weight:bold;">
+                                    RP ${Number(o.nom).toLocaleString('id-ID')} 
+                                    <b onclick="window.delOpsPopup('${k}')" style="color:#ff5252; cursor:pointer; margin-left:10px; background:rgba(255,82,82,0.1); padding:2px 6px; border-radius:4px; font-weight:bold;">X</b>
+                                </span>
+                            </div>`;
+                    }
                 });
+
+                if(!adaDataActive) {
+                    popupList.innerHTML = `<div style="text-align:center; color:#666; font-size:11px; padding:10px 0;">Belum ada pengeluaran harian terinput.</div>`;
+                }
             } else {
                 popupList.innerHTML = `<div style="text-align:center; color:#666; font-size:11px; padding:10px 0;">Belum ada pengeluaran terinput.</div>`;
             }
@@ -794,7 +818,7 @@ window.closePopUpPengeluaran = () => {
     document.getElementById('ins-ops-nom').value = "";
 };
 
-// --- REVISI FUNGSI SIMPAN PENGELUARAN (SUPPORT FORMAT KOMA) ---
+// --- REVISI FUNGSI SIMPAN PENGELUARAN (SISTEM STATUS ACTIVE) ---
 window.simpanPengeluaranBaru = async () => {
     const ketInput = document.getElementById('ins-ops-ket').value.trim();
     
@@ -805,7 +829,6 @@ window.simpanPengeluaranBaru = async () => {
         return alert("HARAP ISI RINCIAN KETERANGAN DAN NOMINAL DENGAN BENAR!");
     }
 
-    // 🚀 Opsi A: Tanggal Otomatis Hari Ini (Format: DD/MM/YYYY)
     const today = new Date();
     const tglInput = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
 
@@ -813,7 +836,8 @@ window.simpanPengeluaranBaru = async () => {
         await push(ref(db, `bbs_operasional/${dbKey}`), {
             tgl: tglInput, 
             ket: ketInput,
-            nom: nomInput
+            nom: nomInput,
+            status: 'ACTIVE' // <--- PENTING: Penanda agar data aman saat Generate PDF Harian
         });
 
         document.getElementById('ins-ops-ket').value = "";
@@ -831,7 +855,6 @@ window.delOpsPopup = async (keyItem) => {
     if(confirm("Apakah Abang yakin ingin menghapus rincian biaya ini?")) {
         try {
             await remove(ref(db, `bbs_operasional/${dbKey}/${keyItem}`));
-            // Update kembali nominal dashboard utama setelah data terhapus
             if(typeof hitungUang === "function") { hitungUang(0); }
         } catch(e) {
             alert("Gagal menghapus data: " + e.message);
@@ -1129,25 +1152,40 @@ window.generatePDFKeseluruhan = async () => {
         
         doc.save(`LAPORAN PENGIRIMAN-${formatTanggal}.pdf`);
         
-        // 10. POP-UP PILIHAN RESET MUNCUL
+      // 10. PROSES UBAH STATUS KE 'ARCHIVE' (Bukan Hapus)
         setTimeout(async () => {
-            if (confirm("PROSES CETAK PDF MASSAL SELESAI!\nApakah Abang ingin sekalian melakukan RESET DATA untuk periode ini?")) {
-                
-                for (let key in dataLogs) {
-                    const item = dataLogs[key];
-                    const statusMobil = (item.status || "").toUpperCase();
-                    
-                    if (statusMobil === 'DONE') {
-                        await remove(ref(db, `bbs_logs/${dbKey}/${key}`));
-                    }
-                }
+    if (confirm("PROSES CETAK PDF HARIAN SELESAI!\nApakah ingin mengarsip data hari ini? Data 'DONE' & Pengeluaran akan dipindahkan ke ARCHIVE (tidak dihapus).")) {
+        
+        document.getElementById('load-txt').innerText = "MENGARSIPKAN DATA...";
+        document.getElementById('loader').style.display = 'flex';
 
-                await remove(ref(db, `bbs_operasional/${dbKey}`));
-                
-                alert("RESET SELESAI!\nData pengiriman (DONE) & seluruh biaya pengeluaran operasional global telah DISAPU BERSIH.\nData armada yang masih OTW tetap aman terpajang di dashboard.");
-                location.reload();
+        // 1. Ubah status data Log Mobil 'DONE' menjadi 'ARCHIVE'
+        for (let key in dataLogs) {
+            const item = dataLogs[key];
+            const statusMobil = (item.status || "").toUpperCase();
+            
+            if (statusMobil === 'DONE') {
+                await update(ref(db, `bbs_logs/${dbKey}/${key}`), { status: 'ARCHIVE' });
             }
-        }, 1000);
+        }
+
+        // 2. Ubah status Pengeluaran Operasional 'ACTIVE' menjadi 'ARCHIVE' (JANGAN DI-REMOVE!)
+        const snapOps = await get(ref(db, `bbs_operasional/${dbKey}`));
+        if (snapOps.exists()) {
+            const dataOps = snapOps.val();
+            for (let keyOps in dataOps) {
+                const statusOps = (dataOps[keyOps].status || 'ACTIVE').toUpperCase();
+                if (statusOps === 'ACTIVE') {
+                    await update(ref(db, `bbs_operasional/${dbKey}/${keyOps}`), { status: 'ARCHIVE' });
+                }
+            }
+        }
+        
+        document.getElementById('loader').style.display = 'none';
+        alert("PROSES ARSIP SELESAI!\nData 'DONE' dan Pengeluaran Harian telah diarsipkan dan aman di Firebase untuk rekap 100 Rit nanti.\nLayar harian kembali bersih.");
+        location.reload();
+    }
+}, 1000);
 
     } catch (err) {
         alert("Gagal memproses Laporan PDF Keseluruhan: " + err.message);
@@ -1293,6 +1331,295 @@ window.editBopMobil = async (firebaseKey, bopMaterialLama, bopMobilLama) => {
         alert("Gagal memperbarui data ke database.");
     } finally {
         document.getElementById('loader').style.display = 'none';
+    }
+};
+
+// Helper Function: Konversi Gambar ke Base64 secara Otomatis
+const loadImageAsBase64 = (src) => {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/jpeg'));
+        };
+        img.onerror = () => resolve(null); // Return null jika gambar tidak ditemukan/gagal
+        img.src = src;
+    });
+};
+
+window.konfirmasiGenerate100Rit = async () => {
+    // 1. PIN KEAMANAN UNTUK PENGARSIPAN TOTAL
+    const KODE_RAHASIA = "BBS";
+    const inputKode = prompt("⚠️ PERINGATAN GENERATE 100 RIT:\n\nMasukkan PIN Keamanan untuk mencetak Rekap 100 Rit dan MENGHAPUS TOTAL data arsip di Firebase:");
+    
+    if (inputKode === null) return;
+    if (inputKode !== KODE_RAHASIA) {
+        return alert("❌ KODE SALAH! Akses ditolak.");
+    }
+
+    document.getElementById('load-txt').innerText = "MENARIK DATA ARCHIVE (100 RIT)...";
+    document.getElementById('loader').style.display = 'flex';
+
+    try {
+        // Load Gambar KOP dan TTD secara Paralel
+        const [kopBase64, ttdBase64] = await Promise.all([
+            loadImageAsBase64('kop.jpeg'),
+            loadImageAsBase64('ttdM.png')
+        ]);
+
+        // 1. AMBIL DATA PENGIRIMAN (LOGS) DARI FIREBASE
+        const snapshot = await get(ref(db, `bbs_logs/${dbKey}`));
+        if (!snapshot.exists()) {
+            document.getElementById('loader').style.display = 'none';
+            return alert("BELUM ADA DATA PENGIRIMAN DI FIREBASE!");
+        }
+
+        const dataAll = snapshot.val();
+        
+        let akumulasiBop = 0;
+        let akumulasiJual = 0;
+        let akumulasiProfitKotor = 0;
+
+        let akumulasiVolM = 0;
+        let akumulasiVolB = 0;
+        let volB_Split12 = 0;
+        let volB_Screening = 0;
+        let volB_AbuBatu = 0;
+        let volB_Lainnya = 0;
+
+        const deletePromises = [];
+        const bodyTableMassal = [];
+        let totalRitase = 0;
+
+        // 2. FILTER & PROSES DATA LOGS BERSTATUS 'ARCHIVE'
+        Object.keys(dataAll).forEach(key => {
+            const item = dataAll[key];
+            const statusMobil = (item.status || "").toUpperCase();
+
+            if (statusMobil === 'ARCHIVE') {
+                totalRitase++;
+
+                const vMuat = Number(item.volM) || 0;
+                const vBongkar = Number(item.volB) || Number(item.volume) || 0;
+                const lossLebih = vBongkar - vMuat;
+
+                const totalBop = Number(item.bop_unit) || (Number(item.bop_material) || 0) + (Number(item.bop_mobil) || 0);
+                const hargaJual = Number(item.harga_jual) || Number(item.hargaJual) || 0;
+                const marginProfit = Number(item.margin_per_unit) || (hargaJual - totalBop);
+
+                // AKUMULASI DATA UTAMA
+                akumulasiVolM += vMuat;
+                akumulasiVolB += vBongkar;
+                akumulasiBop += totalBop;
+                akumulasiJual += hargaJual;
+                akumulasiProfitKotor += marginProfit;
+
+                // LOGIKA BREAKDOWN VOLUME BONGKAR PER JENIS BARANG
+                const namaBarang = (item.barang || item.namaBarang || "").toUpperCase().trim();
+                if (namaBarang.includes("SPLIT 1") || namaBarang.includes("SPLIT 1/2") || namaBarang.includes("SPLIT 1.2")) {
+                    volB_Split12 += vBongkar;
+                } else if (namaBarang.includes("SCREENING") || namaBarang.includes("SCRENING")) {
+                    volB_Screening += vBongkar;
+                } else if (namaBarang.includes("ABU BATU") || namaBarang.includes("ABU")) {
+                    volB_AbuBatu += vBongkar;
+                } else {
+                    volB_Lainnya += vBongkar;
+                }
+
+                bodyTableMassal.push([
+                    totalRitase,
+                    item.tgl || item.tanggal || '-',
+                    item.plat || '-',
+                    item.sopir || '-',
+                    item.project || 'LOSARANG',
+                    namaBarang || '-',
+                    `${vMuat.toFixed(2)} / ${vBongkar.toFixed(2)}`,
+                    (lossLebih > 0 ? "+" : "") + lossLebih.toFixed(2),
+                    `Rp ${totalBop.toLocaleString('id-ID')}`,
+                    hargaJual > 0 ? `Rp ${hargaJual.toLocaleString('id-ID')}` : '-',
+                    marginProfit !== 0 ? `Rp ${marginProfit.toLocaleString('id-ID')}` : '-'
+                ]);
+
+                deletePromises.push(key);
+            }
+        });
+
+        document.getElementById('loader').style.display = 'none';
+
+        if (totalRitase === 0) {
+            return alert("Belum ada data berstatus 'ARCHIVE' untuk di-generate. Pastikan sudah pernah melakukan PDF Harian terlebih dahulu.");
+        }
+
+        // KONFIRMASI TERAKHIR
+        const yakin = confirm(`Ditemukan ${totalRitase} Rit data ARCHIVE.\n\nSistem akan mencetak PDF Rekapitulasi 100 Rit (A4 Landscape) dan MENGHAPUS TOTAL data tersimpan di Firebase.\n\nYakin ingin memproses?`);
+        if (!yakin) return;
+
+        // 3. AMBIL HANYA DATA PENGELUARAN OPERASIONAL YANG BERSTATUS 'ARCHIVE'
+        let totalPengeluaranOps = 0;
+        const deleteOpsKeys = [];
+        const snapOps = await get(ref(db, `bbs_operasional/${dbKey}`));
+
+        if (snapOps.exists()) {
+            const dataOps = snapOps.val();
+            Object.keys(dataOps).forEach(k => {
+                const o = dataOps[k];
+                const statusOps = (o.status || 'ARCHIVE').toUpperCase(); // Default ke ARCHIVE jika data lama belum ada field status
+
+                if (statusOps === 'ARCHIVE') {
+                    const nominalVal = Number(o.nom) || 0;
+                    totalPengeluaranOps += nominalVal;
+                    deleteOpsKeys.push(k);
+                }
+            });
+        }
+
+        // 4. HITUNGAN FINANSIAL
+        const potonganPerusahaan = akumulasiProfitKotor > 0 ? Math.round(akumulasiProfitKotor * 0.10) : 0;
+        const keuntunganBersihFinal = akumulasiProfitKotor - totalPengeluaranOps - potonganPerusahaan;
+
+        // 5. GENERATE PDF LANDSCAPE
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
+
+        if (kopBase64) {
+            doc.addImage(kopBase64, 'JPEG', 14, 8, 45, 18);
+        }
+
+        doc.setFontSize(14); doc.setFont("helvetica", "bold");
+        doc.text("LAPORAN REKAPITULASI 100RIT KIRIMAN MATERIAL", 283, 14, { align: "right" });
+        doc.setFontSize(11); doc.setFont("helvetica", "normal");
+        doc.text("PT. BERKAH BAJA STEEL", 283, 20, { align: "right" });
+
+        doc.autoTable({
+            head: [['NO', 'TANGGAL', 'PLAT NO', 'SOPIR', 'PROJECT', 'BARANG', 'M / B (M3)', '+/-', 'TOTAL BOP', 'HARGA JUAL', 'PROFIT/MARGIN']],
+            body: bodyTableMassal,
+            foot: [[
+                { content: 'TOTAL KESELURUHAN', colSpan: 6, styles: { halign: 'center' } },
+                `${akumulasiVolM.toFixed(2)} / ${akumulasiVolB.toFixed(2)}`,
+                (akumulasiVolB - akumulasiVolM >= 0 ? "+" : "") + (akumulasiVolB - akumulasiVolM).toFixed(2),
+                `Rp ${akumulasiBop.toLocaleString('id-ID')}`, 
+                `Rp ${akumulasiJual.toLocaleString('id-ID')}`, 
+                `Rp ${akumulasiProfitKotor.toLocaleString('id-ID')}`
+            ]],
+            startY: 28,
+            theme: 'grid',
+            styles: { fontSize: 8, halign: 'center', cellPadding: 2 },
+            headStyles: { fillColor: [44, 62, 80], fontStyle: 'bold' },
+            footStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center' },
+            columnStyles: {
+                0: { cellWidth: 10 }, 1: { cellWidth: 22 }, 2: { cellWidth: 25 },
+                3: { cellWidth: 25 }, 4: { cellWidth: 25 }, 5: { cellWidth: 25 },
+                6: { cellWidth: 28 }, 7: { cellWidth: 15 }, 8: { cellWidth: 28 },
+                9: { cellWidth: 28 }, 10: { cellWidth: 30 }
+            }
+        });
+
+        let totalY = doc.lastAutoTable.finalY + 8;
+        if (totalY > 140) { doc.addPage(); totalY = 20; }
+
+        let textBreakdown = `[ Split 1/2: ${volB_Split12.toFixed(2)} M³ | Screening: ${volB_Screening.toFixed(2)} M³ | Abu Batu: ${volB_AbuBatu.toFixed(2)} M³`;
+        if (volB_Lainnya > 0) {
+            textBreakdown += ` | Lainnya: ${volB_Lainnya.toFixed(2)} M³`;
+        }
+        textBreakdown += ` ]`;
+
+        doc.setFillColor(245, 247, 250);
+        doc.rect(14, totalY, 165, 50, "F"); 
+        
+        doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
+        doc.text("RINGKASAN FINANSIAL KESELURUHAN (100 RIT) :", 18, totalY + 6);
+        
+        doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+        
+        doc.setTextColor(0, 0, 0);
+        doc.text(`• TOTAL VOLUME (MUAT / BONGKAR)`, 18, totalY + 12);
+        doc.text(`:`, 74, totalY + 12);
+        doc.text(`${akumulasiVolM.toFixed(2)} M³ / ${akumulasiVolB.toFixed(2)} M³`, 125, totalY + 12, { align: "right" });
+
+        doc.setFontSize(7.5); doc.setFont("helvetica", "italic"); doc.setTextColor(80, 80, 80);
+        doc.text(`  Rincian Bongkar`, 18, totalY + 16);
+        doc.text(`:`, 74, totalY + 16);
+        doc.text(`${textBreakdown}`, 125, totalY + 16, { align: "right" });
+
+        doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(0, 0, 0);
+        doc.text(`• TOTAL BIAYA OPERASIONAL (BOP)`, 18, totalY + 22);
+        doc.text(`:`, 74, totalY + 22);
+        doc.text(`Rp`, 78, totalY + 22); doc.text(`${akumulasiBop.toLocaleString('id-ID')}`, 125, totalY + 22, { align: "right" });
+        
+        doc.text(`• TOTAL HARGA JUAL`, 18, totalY + 27);
+        doc.text(`:`, 74, totalY + 27);
+        doc.text(`Rp`, 78, totalY + 27); doc.text(`${akumulasiJual.toLocaleString('id-ID')}`, 125, totalY + 27, { align: "right" });
+
+        doc.setTextColor(0, 0, 0); 
+        doc.text(`• TOTAL PENGELUARAN (Kas/Ops)`, 18, totalY + 32);
+        doc.text(`:`, 74, totalY + 32);
+        doc.text(`Rp`, 78, totalY + 32); doc.text(`${totalPengeluaranOps.toLocaleString('id-ID')}`, 125, totalY + 32, { align: "right" });
+        
+        doc.setTextColor(231, 76, 60); 
+        doc.text(`• ROYALTI PERUSAHAAN (10 %)`, 18, totalY + 37);
+        doc.text(`:`, 74, totalY + 37);
+        doc.text(`Rp`, 78, totalY + 37); doc.text(`${potonganPerusahaan.toLocaleString('id-ID')}`, 125, totalY + 37, { align: "right" });
+
+        doc.setFont("helvetica", "bold");
+        if (keuntunganBersihFinal >= 0) {
+            doc.setTextColor(46, 204, 113);
+            doc.text(`TOTAL PROFIT BERSIH`, 18, totalY + 44);
+            doc.text(`:`, 74, totalY + 44);
+            doc.text(`Rp`, 78, totalY + 44); 
+            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
+        } else {
+            doc.setTextColor(231, 76, 60);
+            doc.text(`TOTAL MINUS`, 18, totalY + 44);
+            doc.text(`:`, 74, totalY + 44);
+            doc.text(`Rp`, 78, totalY + 44); 
+            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
+        }
+
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+        doc.text("Hormat Kami,", 245, totalY + 6, { align: "center" });
+        
+        if (ttdBase64) {
+            doc.addImage(ttdBase64, 'PNG', 225, totalY + 10, 40, 15);
+        }
+
+        doc.setFont("helvetica", "bold");
+        doc.text("YEFRY DESFIRMANZA", 245, totalY + 36, { align: "center", underline: true });
+        
+        doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+        doc.text("MANAGER", 245, totalY + 40, { align: "center" });
+
+        const skrg = new Date();
+        doc.setFontSize(7); doc.setFont("helvetica", "italic"); doc.setTextColor(150, 150, 150);
+        doc.text(`E-Laporan 100 Rit dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 54);
+
+        doc.save(`REKAP-100RIT-${skrg.getDate()}-${skrg.getMonth()+1}-${skrg.getFullYear()}.pdf`);
+
+        // HAPUS PERMANEN HANYA DATA BERSTATUS ARCHIVE DARI FIREBASE
+        document.getElementById('load-txt').innerText = "MENGHAPUS DATA ARCHIVE & OPERASIONAL DARI FIREBASE...";
+        document.getElementById('loader').style.display = 'flex';
+
+        for (let k of deletePromises) {
+            await remove(ref(db, `bbs_logs/${dbKey}/${k}`));
+        }
+
+        for (let kOps of deleteOpsKeys) {
+            await remove(ref(db, `bbs_operasional/${dbKey}/${kOps}`));
+        }
+
+        document.getElementById('loader').style.display = 'none';
+        alert(`🔥 SUKSES TOTAL!\n\nLaporan Rekap 100 Rit (PT. BERKAH BAJA STEEL) telah terdownload.\n- ${totalRitase} data ARCHIVE dibersihkan.\n- Total Pengeluaran ARCHIVE Rp ${totalPengeluaranOps.toLocaleString('id-ID')} telah dibersihkan.`);
+        location.reload();
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById('loader').style.display = 'none';
+        alert("Gagal memproses Generate 100 Rit: " + err.message);
     }
 };
     
