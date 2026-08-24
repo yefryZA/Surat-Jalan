@@ -225,7 +225,7 @@
     const firebaseConfig = { apiKey: "AIzaSyAfeLTKRQ66tjZjAt7tg6KcrWhtmv0y3fo", databaseURL: "https://berkah-baja-steel-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "berkah-baja-steel" };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const dbKey = "CHM";
+    const dbKey = "CHM1";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyZhTJrSLlzeV8DyC1NcZciJyUrTLzMff5UahkTpZcDuF6PPX2o4E9Pc2K_guOhMjEh/exec";
 
     const mode = new URLSearchParams(window.location.search).get('mode');
@@ -979,7 +979,7 @@ window.generatePDFKeseluruhan = async () => {
             ]);
         }
 
-        // 🚀 2. AMBIL DATA PENGELUARAN OPERASIONAL GLOBAL DARI FIREBASE
+// 🚀 2. AMBIL DATA PENGELUARAN OPERASIONAL GLOBAL DARI FIREBASE (HANYA STATUS ACTIVE)
         let totalPengeluaranGlobal = 0;
         const bodyTableOps = []; 
         let noOps = 1;
@@ -988,10 +988,18 @@ window.generatePDFKeseluruhan = async () => {
         if (snapOps.exists()) {
             Object.keys(snapOps.val()).forEach(k => {
                 const o = snapOps.val()[k];
+                
+                // 🚀 GERBANG PENYARING: Ambil status, default ke 'ACTIVE' jika belum ada
+                const statusOps = (o.status || 'ACTIVE').toUpperCase();
+                
+                // Jika status bukan ACTIVE (misal ARCHIVE), lewati!
+                if (statusOps !== 'ACTIVE') {
+                    return;
+                }
+
                 const nominalOps = Number(o.nom) || 0;
                 totalPengeluaranGlobal += nominalOps;
 
-                // 🚀 DIKIRIM TERPISAH: No, Keterangan, Teks "Rp", baru Angka Nominalnya
                 bodyTableOps.push([
                     noOps++,
                     o.tgl || '-', 
@@ -1115,20 +1123,23 @@ window.generatePDFKeseluruhan = async () => {
         doc.text(`(Kas/Ops)`, 128, totalY + 37);
 
         // 🚀 BARIS TOTAL PROFIT BERSIH AKHIR
-        doc.setFont("helvetica", "bold");
-        if (keuntunganBersihFinal >= 0) {
-            doc.setTextColor(46, 204, 113); // Font Warna Hijau Sukses
-            doc.text(`TOTAL PROFIT`, 18, totalY + 44);
-            doc.text(`:`, 74, totalY + 44);
-            doc.text(`Rp`, 78, totalY + 44); 
-            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
-        } else {
-            doc.setTextColor(231, 76, 60); // Font Warna Merah Minus
-            doc.text(`TOTAL MINUS`, 18, totalY + 44);
-            doc.text(`:`, 74, totalY + 44);
-            doc.text(`Rp`, 78, totalY + 44); 
-            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
-        }
+    // Atur jenis font dan ukurannya (contoh: 14pt)
+doc.setFont("helvetica", "bold");
+doc.setFontSize(15); // <-- TAMBAHKAN INI (Ganti 14 sesuai kebutuhan)
+
+if (keuntunganBersihFinal >= 0) {
+    doc.setTextColor(46, 204, 113); // Font Warna Hijau Sukses
+    doc.text(`TOTAL PROFIT`, 18, totalY + 44);
+    doc.text(`:`, 74, totalY + 44);
+    doc.text(`Rp`, 78, totalY + 44); 
+    doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
+} else {
+    doc.setTextColor(231, 76, 60); // Font Warna Merah Minus
+    doc.text(`TOTAL MINUS`, 18, totalY + 44);
+    doc.text(`:`, 74, totalY + 44);
+    doc.text(`Rp`, 78, totalY + 44); 
+    doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
+}
       
         // 8. TTD Manager Kantor (Kembalikan warna teks ke Hitam murni)
         doc.setTextColor(0, 0, 0);
@@ -1565,7 +1576,10 @@ window.konfirmasiGenerate100Rit = async () => {
         doc.text(`:`, 74, totalY + 37);
         doc.text(`Rp`, 78, totalY + 37); doc.text(`${potonganPerusahaan.toLocaleString('id-ID')}`, 125, totalY + 37, { align: "right" });
 
+        // --- TOTAL PROFIT / MINUS BERSIH ---
         doc.setFont("helvetica", "bold");
+        doc.setFontSize(14); // <-- Ditambahkan agar font lebih besar
+
         if (keuntunganBersihFinal >= 0) {
             doc.setTextColor(46, 204, 113);
             doc.text(`TOTAL PROFIT BERSIH`, 18, totalY + 44);
@@ -1580,12 +1594,14 @@ window.konfirmasiGenerate100Rit = async () => {
             doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
         }
 
+        // --- TANDA TANGAN MANAGER ---
         doc.setTextColor(0, 0, 0);
         doc.setFont("helvetica", "normal"); doc.setFontSize(10);
         doc.text("Hormat Kami,", 245, totalY + 6, { align: "center" });
         
         if (ttdBase64) {
-            doc.addImage(ttdBase64, 'PNG', 225, totalY + 10, 40, 15);
+            // Posisi X disesuaikan ke 230 dengan lebar 30mm x 20mm agar simetris di tengah
+            doc.addImage(ttdBase64, 'PNG', 230, totalY + 10, 30, 20);
         }
 
         doc.setFont("helvetica", "bold");
@@ -1600,17 +1616,15 @@ window.konfirmasiGenerate100Rit = async () => {
 
         doc.save(`REKAP-100RIT-${skrg.getDate()}-${skrg.getMonth()+1}-${skrg.getFullYear()}.pdf`);
 
-        // HAPUS PERMANEN HANYA DATA BERSTATUS ARCHIVE DARI FIREBASE
+        // --- PROSES HAPUS PERMANEN DATA ARCHIVE DARI FIREBASE ---
         document.getElementById('load-txt').innerText = "MENGHAPUS DATA ARCHIVE & OPERASIONAL DARI FIREBASE...";
         document.getElementById('loader').style.display = 'flex';
 
-        for (let k of deletePromises) {
-            await remove(ref(db, `bbs_logs/${dbKey}/${k}`));
-        }
+        // Menggunakan Promise.all agar eksekusi hapus serentak (jauh lebih efisien)
+        const deleteLogPromises = deleteLogKeys.map(k => remove(ref(db, `bbs_logs/${dbKey}/${k}`)));
+        const deleteOpsPromises = deleteOpsKeys.map(kOps => remove(ref(db, `bbs_operasional/${dbKey}/${kOps}`)));
 
-        for (let kOps of deleteOpsKeys) {
-            await remove(ref(db, `bbs_operasional/${dbKey}/${kOps}`));
-        }
+        await Promise.all([...deleteLogPromises, ...deleteOpsPromises]);
 
         document.getElementById('loader').style.display = 'none';
         alert(`🔥 SUKSES TOTAL!\n\nLaporan Rekap 100 Rit (PT. BERKAH BAJA STEEL) telah terdownload.\n- ${totalRitase} data ARCHIVE dibersihkan.\n- Total Pengeluaran ARCHIVE Rp ${totalPengeluaranOps.toLocaleString('id-ID')} telah dibersihkan.`);
