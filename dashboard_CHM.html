@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard BBS - Logistik</title>
+    <title>Dashboard BBS - Logistik Multi-Supplier</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     
     <!-- === CSS STYLING === -->
@@ -51,7 +51,7 @@
         }
 
         .welcome-main-title {
-            font-size: 25px;
+            font-size: 32px;
             color: #ffd700;
             font-weight: 700;
             font-family: 'Orbitron', sans-serif;
@@ -128,7 +128,6 @@
             100% { transform: translateX(-100%); }
         }
 
-        /* Efek Hijau Menyala Kelap-Kelip untuk Bullet */
         .neon-bullet {
             color: #00ff66;
             text-shadow: 0 0 8px #00ff66, 0 0 15px #00ff66;
@@ -146,7 +145,7 @@
             }
         }
 
-        /* Wrapper Jam & Tanggal / Total BOP (Flex Space Between) */
+        /* Wrapper Jam & Tanggal / Total BOP */
         .clock-date-wrapper {
             display: flex;
             justify-content: space-between;
@@ -178,7 +177,6 @@
             gap: 4px;
         }
 
-        /* Styling khusus untuk teks detik agar lebih kecil */
         #live-seconds {
             font-size: 16px;
             color: #00bcd4;
@@ -193,7 +191,6 @@
             text-transform: uppercase;
         }
 
-        /* Styling Total BOP di Kanan */
         .right-bop-group {
             background: rgba(255, 215, 0, 0.1);
             border: 1px solid rgba(255, 215, 0, 0.3);
@@ -217,36 +214,76 @@
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
         }
 
-        /* Container Utama untuk Daftar Unit (Grid Dashboard) */
-        #log-list {
+        /* Header Section Pengirim */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        /* Tema Warna PT CHM (Cyan / Cool Blue) */
+        .theme-chm {
+            background: linear-gradient(90deg, rgba(0, 229, 255, 0.2), rgba(11, 19, 43, 0.8));
+            border-left: 6px solid #00e5ff;
+            color: #00e5ff;
+        }
+
+        /* Tema Warna H. MANYAR (Amber / Warm Gold) */
+        .theme-manyar {
+            background: linear-gradient(90deg, rgba(255, 152, 0, 0.2), rgba(11, 19, 43, 0.8));
+            border-left: 6px solid #ff9800;
+            color: #ff9800;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            letter-spacing: 1px;
+        }
+
+        .section-badge {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Container Grid Unit */
+        .log-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 16px;
             padding: 10px;
-            max-height: 70vh;
+            max-height: 48vh;
             overflow-y: auto;
             background: rgba(10, 15, 30, 0.6);
             border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        #log-list-chm {
             border: 1px solid rgba(0, 229, 255, 0.2);
         }
 
-        /* Scrollbar Styling */
-        #log-list::-webkit-scrollbar {
-            width: 8px;
-        }
-        #log-list::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 4px;
-        }
-        #log-list::-webkit-scrollbar-thumb {
-            background: #00e5ff;
-            border-radius: 4px;
+        #log-list-manyar {
+            border: 1px solid rgba(255, 152, 0, 0.2);
         }
 
-        /* Desain Kartu Unit (Truck Card) */
+        /* Scrollbar Styling */
+        .log-grid::-webkit-scrollbar { width: 8px; }
+        .log-grid::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
+        #log-list-chm::-webkit-scrollbar-thumb { background: #00e5ff; border-radius: 4px; }
+        #log-list-manyar::-webkit-scrollbar-thumb { background: #ff9800; border-radius: 4px; }
+
+        /* Kartu Unit */
         .truck-card {
             background: linear-gradient(135deg, rgba(20, 30, 48, 0.85), rgba(36, 59, 85, 0.85));
-            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             padding: 14px;
             display: flex;
@@ -257,13 +294,24 @@
             box-sizing: border-box;
         }
 
-        .truck-card:hover {
+        .truck-card.card-chm {
+            border: 1px solid rgba(0, 229, 255, 0.2);
+        }
+        .truck-card.card-chm:hover {
             transform: translateY(-3px);
             border-color: #00e5ff;
-            box-shadow: 0 6px 15px rgba(0, 229, 255, 0.15);
+            box-shadow: 0 6px 15px rgba(0, 229, 255, 0.2);
         }
 
-        /* Header Kartu */
+        .truck-card.card-manyar {
+            border: 1px solid rgba(255, 152, 0, 0.2);
+        }
+        .truck-card.card-manyar:hover {
+            transform: translateY(-3px);
+            border-color: #ff9800;
+            box-shadow: 0 6px 15px rgba(255, 152, 0, 0.2);
+        }
+
         .card-header {
             display: flex;
             justify-content: space-between;
@@ -272,12 +320,10 @@
             padding-bottom: 6px;
             margin-bottom: 8px;
         }
-        .sj-number {
-            font-size: 11px;
-            font-weight: bold;
-            color: #00e5ff;
-            font-family: monospace;
-        }
+
+        .sj-number-chm { font-size: 11px; font-weight: bold; color: #00e5ff; font-family: monospace; }
+        .sj-number-manyar { font-size: 11px; font-weight: bold; color: #ff9800; font-family: monospace; }
+        
         .info-waktu {
             font-size: 10px;
             color: #aaa;
@@ -286,73 +332,23 @@
             border-radius: 3px;
         }
 
-        /* Bagian Isi Kartu */
-        .plat-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 6px;
-        }
-        .plat-text {
-            font-size: 15px;
-            font-weight: bold;
-            color: #FFF;
-        }
-        .project-badge {
-            font-size: 10px;
-            font-weight: bold;
-            color: #ffd700;
-            background: rgba(255, 215, 0, 0.15);
-            padding: 1px 5px;
-            border-radius: 3px;
-        }
+        .plat-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+        .plat-text { font-size: 15px; font-weight: bold; color: #FFF; }
+        .project-badge { font-size: 10px; font-weight: bold; color: #ffd700; background: rgba(255, 215, 0, 0.15); padding: 1px 5px; border-radius: 3px; }
 
-        .vol-row {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 8px;
-            font-size: 11px;
-            font-weight: bold;
-        }
-        .vol-m {
-            color: #2ecc71;
-            background: rgba(46, 204, 113, 0.1);
-            padding: 2px 6px;
-            border-radius: 3px;
-            border: 1px solid rgba(46, 204, 113, 0.2);
-        }
-        .vol-b {
-            color: #00e5ff;
-            background: rgba(0, 229, 255, 0.1);
-            padding: 2px 6px;
-            border-radius: 3px;
-            border: 1px solid rgba(0, 229, 255, 0.2);
-        }
+        .vol-row { display: flex; gap: 6px; margin-bottom: 8px; font-size: 11px; font-weight: bold; }
+        .vol-m { color: #2ecc71; background: rgba(46, 204, 113, 0.1); padding: 2px 6px; border-radius: 3px; border: 1px solid rgba(46, 204, 113, 0.2); }
+        .vol-b { color: #00e5ff; background: rgba(0, 229, 255, 0.1); padding: 2px 6px; border-radius: 3px; border: 1px solid rgba(0, 229, 255, 0.2); }
 
-        .info-item {
-            font-size: 12px;
-            color: #ddd;
-            margin-bottom: 4px;
-        }
+        .info-item { font-size: 12px; color: #ddd; margin-bottom: 4px; }
         .info-item.bop { color: #ffd700; }
         .info-item.jual { color: #00e5ff; }
         .info-item.margin { color: #2ecc71; }
 
-        .foto-links {
-            font-size: 11px;
-            margin-top: 6px;
-            margin-bottom: 8px;
-        }
-        .foto-links a {
-            color: #4caf50;
-            font-weight: bold;
-            text-decoration: none;
-        }
-        .foto-links a:hover {
-            text-decoration: underline;
-        }
+        .foto-links { font-size: 11px; margin-top: 6px; margin-bottom: 8px; }
+        .foto-links a { color: #4caf50; font-weight: bold; text-decoration: none; }
+        .foto-links a:hover { text-decoration: underline; }
 
-        /* Tombol & Status di Bawah Kartu */
         .card-footer {
             display: flex;
             flex-direction: column;
@@ -362,6 +358,7 @@
             width: 100%;
             box-sizing: border-box;
         }
+
         .btn-otw {
             background: #FF9800;
             color: white;
@@ -376,9 +373,8 @@
             transition: background 0.2s;
             box-sizing: border-box;
         }
-        .btn-otw:hover {
-            background: #f57c00;
-        }
+        .btn-otw:hover { background: #f57c00; }
+        
         .badge-done {
             background: #4CAF50;
             padding: 6px 10px;
@@ -391,11 +387,8 @@
             color: white;
             box-sizing: border-box;
         }
-        .selisih-wrapper {
-            width: 100%;
-            text-align: center;
-            font-size: 10px;
-        }
+
+        .selisih-wrapper { width: 100%; text-align: center; font-size: 10px; }
     </style>
 </head>
 <body>
@@ -416,7 +409,7 @@
 
     <!-- Tampilan Mode Utama -->
     <div id="view-dashboard" class="view-container">
-        <!-- Header dengan Teks Berjalan & Efek Neon Hijau Berkedip pada Simbol Titik -->
+        <!-- Header Utama -->
         <div class="dashboard-header">
             <div class="marquee-container">
                 <div class="marquee-text">
@@ -425,7 +418,6 @@
             </div>
             
             <div class="clock-date-wrapper">
-                <!-- Sisi Kiri: Jam & Tanggal -->
                 <div class="left-info-group">
                     <div id="live-clock">
                         <span id="live-time-main">00.00</span><span id="live-seconds">.00</span>
@@ -433,7 +425,6 @@
                     <div id="live-date">--/--/----</div>
                 </div>
 
-                <!-- Sisi Kanan: Total BOP Hari Ini -->
                 <div class="right-bop-group">
                     <div class="bop-title">Total BOP Hari Ini</div>
                     <div id="total-bop-amount">RP 0</div>
@@ -441,13 +432,25 @@
             </div>
         </div>
 
-        <div id="log-list"></div>
+        <!-- Section 1: Kiriman PT. CHM -->
+        <div class="section-header theme-chm">
+            <span class="section-title">🚛 KIRIMAN PT. CHM</span>
+            <span class="section-badge" id="badge-chm-info">0 Unit (OTW: 0)</span>
+        </div>
+        <div id="log-list-chm" class="log-grid"></div>
+
+        <!-- Section 2: Kiriman H. MANYAR -->
+        <div class="section-header theme-manyar">
+            <span class="section-title">🚛 KIRIMAN H. MANYAR</span>
+            <span class="section-badge" id="badge-manyar-info">0 Unit (OTW: 0)</span>
+        </div>
+        <div id="log-list-manyar" class="log-grid"></div>
     </div>
 
     <!-- === JAVASCRIPT & FIREBASE SDK === -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, push, onValue, get, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = { 
             apiKey: "AIzaSyAfeLTKRQ66tjZjAt7tg6KcrWhtmv0y3fo", 
@@ -457,18 +460,17 @@
         
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const dbKey = "CHM1";
 
-        // Fungsi untuk Masuk System & Fullscreen
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyZhTJrSLlzeV8DyC1NcZciJyUrTLzMff5UahkTpZcDuF6PPX2o4E9Pc2K_guOhMjEh/exec";
+
+        // Fitur Fullscreen & Navigasi
         document.getElementById('btn-masuk-system').addEventListener('click', () => {
             const elem = document.documentElement;
             if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch(err => {
-                    console.log("Fullscreen error:", err);
-                });
-            } else if (elem.webkitRequestFullscreen) { /* Safari */
+                elem.requestFullscreen().catch(err => console.log("Fullscreen error:", err));
+            } else if (elem.webkitRequestFullscreen) {
                 elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) { /* IE11 */
+            } else if (elem.msRequestFullscreen) {
                 elem.msRequestFullscreen();
             }
 
@@ -482,12 +484,9 @@
             }
         });
 
-        // Pengaturan Mode Tampilan (Hanya sembunyikan welcome screen jika auto-bukan dari klik, tapi karena pakai welcome screen kita biarkan welcome screen tampil dulu)
-
-        // Fungsi Jam, Menit, Detik & Tanggal Real-Time
+        // Live Clock & Date
         function updateClockAndDate() {
             const now = new Date();
-            
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
@@ -498,141 +497,162 @@
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('live-date').innerText = now.toLocaleDateString('id-ID', options);
         }
-        
         updateClockAndDate();
         setInterval(updateClockAndDate, 1000);
 
-        let rawData = [];
+        // State Global untuk akumulasi gabungan
+        let stateCHM = { otw: 0, bop: 0, count: 0 };
+        let stateMANYAR = { otw: 0, bop: 0, count: 0 };
 
-        onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
-            const data = snap.val();
-            let tm = 0, tb = 0, otw = 0, totalBopToday = 0; 
-            rawData = [];
-            const list = document.getElementById('log-list');
-            if (!list) return;
-            list.innerHTML = "";
-            
-            let counterSjRef = ref(db, `bbs_counter_sj/${dbKey}`);
-            let counterSnap = await get(counterSjRef);
-            let currentCounter = counterSnap.exists() ? Number(counterSnap.val()) : 70;
+        function updateCombinedSummary() {
+            const totalOtw = stateCHM.otw + stateMANYAR.otw;
+            const totalBop = stateCHM.bop + stateMANYAR.bop;
 
-            if(data) {
-                const romawiBulan = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
-                const d = new Date();
-                const bulanRomawi = romawiBulan[d.getMonth()];
-                const tahunSekarang = d.getFullYear();
-
-                const keys = Object.keys(data);
-                const totalData = keys.length;
-                
-                keys.forEach((k, index) => {
-                    const i = data[k];
-                    const statusMobil = (i.status || "").toUpperCase();
-                    
-                    if(statusMobil === 'ARCHIVE') return;
-
-                    tm += Number(i.volM || 0); 
-                    tb += Number(i.volB || 0); 
-                    totalBopToday += Number(i.bop_unit || 0); // Menghitung akumulasi total BOP
-                    rawData.push({ ...i, firebaseKey: k });
-                    
-                    let statusElement = "";
-                    if(statusMobil === 'OTW') {
-                        otw++;
-                        statusElement = `
-                            <button onclick="openOtwManager('${k}', '${i.plat}')" class="btn-otw">
-                                ${statusMobil} ( PROSES BONGKAR )
-                            </button>
-                        `;
-                    } else {
-                        statusElement = `
-                            <span class="badge-done">
-                                ✅ ${i.status}
-                            </span>
-                        `;
-                    }
-
-                    let nomorSuratJalanLengkap = i.noSuratJalan || i.nomor_surat_jalan || i.surat_jalan || i.no_sj;
-                    if (!nomorSuratJalanLengkap || nomorSuratJalanLengkap === '-' || nomorSuratJalanLengkap.includes('000/bbs')) {
-                        const estimatedNo = currentCounter - totalData + (index + 1);
-                        const safeNo = estimatedNo > 0 ? estimatedNo : (index + 1);
-                        const stringNomorUrut = String(safeNo).padStart(3, '0');
-                        nomorSuratJalanLengkap = `${stringNomorUrut}/bbs/${bulanRomawi}/${tahunSekarang}`;
-                    }
-                    
-                    const jamMuat = i.jamM || i.jam_muat || i.jam || '';
-                    const tglMuat = i.tgl || i.tglM || i.tanggal || '-';
-                    const infoWaktu = jamMuat ? `${jamMuat} ※ ${tglMuat}` : tglMuat;
-                    
-                    list.innerHTML += `
-                    <div class="truck-card">
-                        <div class="card-header">
-                            <span class="sj-number">${nomorSuratJalanLengkap}</span>
-                            <span class="info-waktu">${infoWaktu}</span>
-                        </div>
-
-                        <div class="card-body">
-                            <div class="plat-row">
-                                <span class="plat-text">${i.plat}</span> 
-                                <span class="project-badge">[${i.project || 'LOSARANG'}]</span>
-                            </div>
-
-                            <div class="vol-row">
-                                <span class="vol-m">VOL M : ${i.volM || 0} M³</span>
-                                <span class="vol-b">VOL B : ${i.volB || 0} M³</span>
-                            </div>
-                            
-                            <div class="info-item">
-                                MUATAN <b>${i.barang ? i.barang.toUpperCase() : '-'}</b>
-                            </div>
-
-                            <div class="info-item">
-                                PENGEMUDI : <b>${i.sopir}</b>
-                            </div>
-
-                            <div class="info-item bop">
-                                💰 BOP : RP ${(i.bop_unit || 0).toLocaleString('id-ID')}
-                            </div>
-
-                            <div class="info-item jual">
-                                🏷️ HARGA JUAL : RP ${(i.harga_jual || i.hargaJual || i.harga || 0).toLocaleString('id-ID')}
-                            </div>
-                            
-                            ${i.margin_per_unit ? `
-                            <div class="info-item margin">
-                                📈 MARGIN : RP ${i.margin_per_unit.toLocaleString('id-ID')}
-                            </div>
-                            ` : ''}
-                            
-                            <div class="foto-links">
-                                <a href="${i.fotoM}" target="_blank">📄 FOTO SAAT LOADING</a> 
-                                ${i.fotoB ? `| <a href="${i.fotoB}" target="_blank">📄 FOTO BONGKAR</a>` : ''}
-                            </div>
-                        </div>
-                        
-                        <div class="card-footer">
-                            ${statusElement}
-                            <div class="selisih-wrapper">
-                                ${typeof getBadgeSelisih === 'function' ? getBadgeSelisih(i) : ''}
-                            </div>
-                        </div>
-                    </div>`;
-                });
-            }
-            
-            // Update total OTW di marquee
             const countOtwEl = document.getElementById('d-count-otw');
-            if (countOtwEl) countOtwEl.innerText = otw;
+            if (countOtwEl) countOtwEl.innerText = totalOtw;
 
-            // Update Total BOP di header kanan
             const totalBopEl = document.getElementById('total-bop-amount');
             if (totalBopEl) {
-                totalBopEl.innerText = `RP ${totalBopToday.toLocaleString('id-ID')}`;
+                totalBopEl.innerText = `RP ${totalBop.toLocaleString('id-ID')}`;
             }
-            
-            if (typeof hitungUang === "function") {
-                hitungUang(tb);
-            }
+
+            document.getElementById('badge-chm-info').innerText = `${stateCHM.count} Unit (OTW: ${stateCHM.otw})`;
+            document.getElementById('badge-manyar-info').innerText = `${stateMANYAR.count} Unit (OTW: ${stateMANYAR.otw})`;
+        }
+
+        // Render Card Generator
+        function renderCards(data, targetContainerId, dbKey, isManyar = false) {
+            const list = document.getElementById(targetContainerId);
+            if (!list) return { otw: 0, totalBop: 0, count: 0 };
+            list.innerHTML = "";
+
+            let tm = 0, tb = 0, otw = 0, totalBop = 0, count = 0;
+            if (!data) return { otw, totalBop, count };
+
+            const romawiBulan = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+            const d = new Date();
+            const bulanRomawi = romawiBulan[d.getMonth()];
+            const tahunSekarang = d.getFullYear();
+
+            const keys = Object.keys(data);
+            const totalData = keys.length;
+
+            keys.forEach((k, index) => {
+                const i = data[k];
+                const statusMobil = (i.status || "").toUpperCase();
+                
+                if(statusMobil === 'ARCHIVE') return;
+
+                count++;
+                tm += Number(i.volM || 0); 
+                tb += Number(i.volB || 0); 
+                totalBop += Number(i.bop_unit || 0);
+                
+                let statusElement = "";
+                if(statusMobil === 'OTW') {
+                    otw++;
+                    statusElement = `
+                        <button onclick="openOtwManager('${k}', '${i.plat}')" class="btn-otw">
+                            ${statusMobil} ( PROSES BONGKAR )
+                        </button>
+                    `;
+                } else {
+                    statusElement = `
+                        <span class="badge-done">
+                            ✅ ${i.status}
+                        </span>
+                    `;
+                }
+
+                let nomorSuratJalanLengkap = i.noSuratJalan || i.nomor_surat_jalan || i.surat_jalan || i.no_sj;
+                if (!nomorSuratJalanLengkap || nomorSuratJalanLengkap === '-' || nomorSuratJalanLengkap.includes('000/bbs')) {
+                    const safeNo = index + 1;
+                    const stringNomorUrut = String(safeNo).padStart(3, '0');
+                    const prefix = isManyar ? 'MYR' : 'BBS';
+                    nomorSuratJalanLengkap = `${stringNomorUrut}/${prefix}/${bulanRomawi}/${tahunSekarang}`;
+                }
+                
+                const jamMuat = i.jamM || i.jam_muat || i.jam || '';
+                const tglMuat = i.tgl || i.tglM || i.tanggal || '-';
+                const infoWaktu = jamMuat ? `${jamMuat} ※ ${tglMuat}` : tglMuat;
+
+                const cardThemeClass = isManyar ? 'card-manyar' : 'card-chm';
+                const sjThemeClass = isManyar ? 'sj-number-manyar' : 'sj-number-chm';
+                
+                list.innerHTML += `
+                <div class="truck-card ${cardThemeClass}">
+                    <div class="card-header">
+                        <span class="${sjThemeClass}">${nomorSuratJalanLengkap}</span>
+                        <span class="info-waktu">${infoWaktu}</span>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="plat-row">
+                            <span class="plat-text">${i.plat}</span> 
+                            <span class="project-badge">[${i.project || (isManyar ? 'MANYAR' : 'LOSARANG')}]</span>
+                        </div>
+
+                        <div class="vol-row">
+                            <span class="vol-m">VOL M : ${i.volM || 0} M³</span>
+                            <span class="vol-b">VOL B : ${i.volB || 0} M³</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            MUATAN <b>${i.barang ? i.barang.toUpperCase() : '-'}</b>
+                        </div>
+
+                        <div class="info-item">
+                            PENGEMUDI : <b>${i.sopir || '-'}</b>
+                        </div>
+
+                        <div class="info-item bop">
+                            💰 BOP : RP ${(i.bop_unit || 0).toLocaleString('id-ID')}
+                        </div>
+
+                        <div class="info-item jual">
+                            🏷️ HARGA JUAL : RP ${(i.harga_jual || i.hargaJual || i.harga || 0).toLocaleString('id-ID')}
+                        </div>
+                        
+                        ${i.margin_per_unit ? `
+                        <div class="info-item margin">
+                            📈 MARGIN : RP ${i.margin_per_unit.toLocaleString('id-ID')}
+                        </div>
+                        ` : ''}
+                        
+                        <div class="foto-links">
+                            ${i.fotoM ? `<a href="${i.fotoM}" target="_blank">📄 FOTO LOADING</a>` : ''} 
+                            ${i.fotoB ? `| <a href="${i.fotoB}" target="_blank">📄 FOTO BONGKAR</a>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        ${statusElement}
+                        <div class="selisih-wrapper">
+                            ${typeof getBadgeSelisih === 'function' ? getBadgeSelisih(i) : ''}
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            return { otw, totalBop, count };
+        }
+
+        // Listener Real-time Firebase 1: CHM1
+        onValue(ref(db, `bbs_logs/CHM1`), (snap) => {
+            const result = renderCards(snap.val(), 'log-list-chm', 'CHM1', false);
+            stateCHM.otw = result.otw;
+            stateCHM.bop = result.totalBop;
+            stateCHM.count = result.count;
+            updateCombinedSummary();
+        });
+
+        // Listener Real-time Firebase 2: MANYAR
+        onValue(ref(db, `bbs_logs/MANYAR`), (snap) => {
+            const result = renderCards(snap.val(), 'log-list-manyar', 'MANYAR', true);
+            stateMANYAR.otw = result.otw;
+            stateMANYAR.bop = result.totalBop;
+            stateMANYAR.count = result.count;
+            updateCombinedSummary();
         });
     </script>
 </body>
