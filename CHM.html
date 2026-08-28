@@ -9,7 +9,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
         :root { --blue-dark: #0A192F; --silver: #C0C0C0; --gold: #FFD700; --red: #FF4D4D; --glass: rgba(255, 255, 255, 0.1); --green: #64FFDA; }
@@ -898,10 +899,30 @@ window.generatePDF = async (item, jamBongkarPasti) => {
 };
 
 window.generatePDFKeseluruhan = async () => {
-    // 🔒 PENGAMAN AWAL SEBELUM GENERATE & ARSIP
-    const konfirmasiAwal = confirm("BANG YEFRY, APAKAH ONGKOS MOBIL SUDAH SESUAI DENGAN VOLUME BONGKAR ⁉️⁉️⁉️");
-    if (!konfirmasiAwal) {
-        return; // Hentikan eksekusi jika diklik CANCEL
+    // 🔒 PENGAMAN DENGAN POPUP BESAR DI TENGAH LAYAR
+    const result = await Swal.fire({
+        title: '⚠️ PERINGATAN PENTING!',
+        html: `
+            <div style="font-size: 20px; font-weight: bold; color: #d33; line-height: 1.5; margin-top: 10px;">
+                BANG YEFRY, APAKAH ONGKOS MOBIL SUDAH SESUAI DENGAN VOLUME BONGKAR ⁉️⁉️⁉️
+            </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '✅ YA, SUDAH SESUAI',
+        cancelButtonText: '❌ BATAL / CEK LAGI',
+        focusCancel: true, // Fokus ke tombol batal agar tidak sengaja tertekan ENTER
+        allowOutsideClick: false, // Menghindari tidak sengaja klik di luar popup
+        customClass: {
+            popup: 'swal-wide'
+        }
+    });
+
+    // Jika pengguna klik "BATAL" atau menutup dialog
+    if (!result.isConfirmed) {
+        return; // Hentikan eksekusi
     }
 
     const { jsPDF } = window.jspdf;
