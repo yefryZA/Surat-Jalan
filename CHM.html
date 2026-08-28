@@ -502,7 +502,8 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
         const keys = Object.keys(data);
         const totalData = keys.length;
         
-        keys.forEach((k, index) => {
+        // 🚀 DIBALIK URUTANNYA AGAR DATA TERBARU MUNCUL DI PALING ATAS
+        keys.reverse().forEach((k, index) => {
             const i = data[k];
             const statusMobil = (i.status || "").toUpperCase();
             
@@ -532,8 +533,10 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
             let nomorSuratJalanLengkap = i.noSuratJalan || i.nomor_surat_jalan || i.surat_jalan || i.no_sj;
             
             if (!nomorSuratJalanLengkap || nomorSuratJalanLengkap === '-' || nomorSuratJalanLengkap.includes('000/bbs')) {
-                const estimatedNo = currentCounter - totalData + (index + 1);
-                const safeNo = estimatedNo > 0 ? estimatedNo : (index + 1);
+                // Penyesuaian indeks asli untuk estimasi nomor urut surat jalan
+                const originalIndex = totalData - 1 - index;
+                const estimatedNo = currentCounter - totalData + (originalIndex + 1);
+                const safeNo = estimatedNo > 0 ? estimatedNo : (originalIndex + 1);
                 const stringNomorUrut = String(safeNo).padStart(3, '0');
                 nomorSuratJalanLengkap = `${stringNomorUrut}/bbs/${bulanRomawi}/${tahunSekarang}`;
             }
