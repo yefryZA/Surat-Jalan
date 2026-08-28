@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard BBS - Logistik Multi-Supplier</title>
+    <title>Dashboard BBS</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     
     <!-- === CSS STYLING === -->
@@ -434,14 +434,14 @@
 
         <!-- Section 1: Kiriman PT. CHM -->
         <div class="section-header theme-chm">
-            <span class="section-title">🚛 KIRIMAN PT. CHM</span>
+            <span class="section-title">PT. CHM</span>
             <span class="section-badge" id="badge-chm-info">0 Unit (OTW: 0)</span>
         </div>
         <div id="log-list-chm" class="log-grid"></div>
 
         <!-- Section 2: Kiriman H. MANYAR -->
         <div class="section-header theme-manyar">
-            <span class="section-title">🚛 KIRIMAN H. MANYAR</span>
+            <span class="section-title">H. MANYAR</span>
             <span class="section-badge" id="badge-manyar-info">0 Unit (OTW: 0)</span>
         </div>
         <div id="log-list-manyar" class="log-grid"></div>
@@ -500,160 +500,165 @@
         updateClockAndDate();
         setInterval(updateClockAndDate, 1000);
 
-        // State Global untuk akumulasi gabungan
-        let stateCHM = { otw: 0, bop: 0, count: 0 };
-        let stateMANYAR = { otw: 0, bop: 0, count: 0 };
+       // State Global untuk akumulasi gabungan
+let stateCHM = { otw: 0, bop: 0, count: 0 };
+let stateMANYAR = { otw: 0, bop: 0, count: 0 };
 
-        function updateCombinedSummary() {
-            const totalOtw = stateCHM.otw + stateMANYAR.otw;
-            const totalBop = stateCHM.bop + stateMANYAR.bop;
+function updateCombinedSummary() {
+    const totalOtw = stateCHM.otw + stateMANYAR.otw;
+    const totalBop = stateCHM.bop + stateMANYAR.bop;
 
-            const countOtwEl = document.getElementById('d-count-otw');
-            if (countOtwEl) countOtwEl.innerText = totalOtw;
+    const countOtwEl = document.getElementById('d-count-otw');
+    if (countOtwEl) countOtwEl.innerText = totalOtw;
 
-            const totalBopEl = document.getElementById('total-bop-amount');
-            if (totalBopEl) {
-                totalBopEl.innerText = `RP ${totalBop.toLocaleString('id-ID')}`;
-            }
+    const totalBopEl = document.getElementById('total-bop-amount');
+    if (totalBopEl) {
+        totalBopEl.innerText = `RP ${totalBop.toLocaleString('id-ID')}`;
+    }
 
-            document.getElementById('badge-chm-info').innerText = `${stateCHM.count} Unit (OTW: ${stateCHM.otw})`;
-            document.getElementById('badge-manyar-info').innerText = `${stateMANYAR.count} Unit (OTW: ${stateMANYAR.otw})`;
+    const badgeChm = document.getElementById('badge-chm-info');
+    if (badgeChm) badgeChm.innerText = `${stateCHM.count} Unit (OTW: ${stateCHM.otw})`;
+    
+    const badgeManyar = document.getElementById('badge-manyar-info');
+    if (badgeManyar) badgeManyar.innerText = `${stateMANYAR.count} Unit (OTW: ${stateMANYAR.otw})`;
+}
+
+// Render Card Generator
+function renderCards(data, targetContainerId, dbKey, isManyar = false) {
+    const list = document.getElementById(targetContainerId);
+    if (!list) return { otw: 0, totalBop: 0, count: 0 };
+    list.innerHTML = "";
+
+    let tm = 0, tb = 0, otw = 0, totalBop = 0, count = 0;
+    if (!data) return { otw, totalBop, count };
+
+    const romawiBulan = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+    const d = new Date();
+    const bulanRomawi = romawiBulan[d.getMonth()];
+    const tahunSekarang = d.getFullYear();
+
+    const keys = Object.keys(data);
+    const totalData = keys.length;
+
+    // 🚀 DIBALIK URUTANNYA AGAR DATA TERBARU MUNCUL DI PALING ATAS
+    keys.reverse().forEach((k, index) => {
+        const i = data[k];
+        const statusMobil = (i.status || "").toUpperCase();
+        
+        if(statusMobil === 'ARCHIVE') return;
+
+        count++;
+        tm += Number(i.volM || 0); 
+        tb += Number(i.volB || 0); 
+        totalBop += Number(i.bop_unit || 0);
+        
+        let statusElement = "";
+        if(statusMobil === 'OTW') {
+            otw++;
+            statusElement = `
+                <button onclick="openOtwManager('${k}', '${i.plat}')" class="btn-otw">
+                    ${statusMobil} ( PROSES BONGKAR )
+                </button>
+            `;
+        } else {
+            statusElement = `
+                <span class="badge-done">
+                    ✅ ${i.status}
+                </span>
+            `;
         }
 
-        // Render Card Generator
-        function renderCards(data, targetContainerId, dbKey, isManyar = false) {
-            const list = document.getElementById(targetContainerId);
-            if (!list) return { otw: 0, totalBop: 0, count: 0 };
-            list.innerHTML = "";
-
-            let tm = 0, tb = 0, otw = 0, totalBop = 0, count = 0;
-            if (!data) return { otw, totalBop, count };
-
-            const romawiBulan = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
-            const d = new Date();
-            const bulanRomawi = romawiBulan[d.getMonth()];
-            const tahunSekarang = d.getFullYear();
-
-            const keys = Object.keys(data);
-            const totalData = keys.length;
-
-            keys.forEach((k, index) => {
-                const i = data[k];
-                const statusMobil = (i.status || "").toUpperCase();
-                
-                if(statusMobil === 'ARCHIVE') return;
-
-                count++;
-                tm += Number(i.volM || 0); 
-                tb += Number(i.volB || 0); 
-                totalBop += Number(i.bop_unit || 0);
-                
-                let statusElement = "";
-                if(statusMobil === 'OTW') {
-                    otw++;
-                    statusElement = `
-                        <button onclick="openOtwManager('${k}', '${i.plat}')" class="btn-otw">
-                            ${statusMobil} ( PROSES BONGKAR )
-                        </button>
-                    `;
-                } else {
-                    statusElement = `
-                        <span class="badge-done">
-                            ✅ ${i.status}
-                        </span>
-                    `;
-                }
-
-                let nomorSuratJalanLengkap = i.noSuratJalan || i.nomor_surat_jalan || i.surat_jalan || i.no_sj;
-                if (!nomorSuratJalanLengkap || nomorSuratJalanLengkap === '-' || nomorSuratJalanLengkap.includes('000/bbs')) {
-                    const safeNo = index + 1;
-                    const stringNomorUrut = String(safeNo).padStart(3, '0');
-                    const prefix = isManyar ? 'MYR' : 'BBS';
-                    nomorSuratJalanLengkap = `${stringNomorUrut}/${prefix}/${bulanRomawi}/${tahunSekarang}`;
-                }
-                
-                const jamMuat = i.jamM || i.jam_muat || i.jam || '';
-                const tglMuat = i.tgl || i.tglM || i.tanggal || '-';
-                const infoWaktu = jamMuat ? `${jamMuat} ※ ${tglMuat}` : tglMuat;
-
-                const cardThemeClass = isManyar ? 'card-manyar' : 'card-chm';
-                const sjThemeClass = isManyar ? 'sj-number-manyar' : 'sj-number-chm';
-                
-                list.innerHTML += `
-                <div class="truck-card ${cardThemeClass}">
-                    <div class="card-header">
-                        <span class="${sjThemeClass}">${nomorSuratJalanLengkap}</span>
-                        <span class="info-waktu">${infoWaktu}</span>
-                    </div>
-
-                    <div class="card-body">
-                        <div class="plat-row">
-                            <span class="plat-text">${i.plat}</span> 
-                            <span class="project-badge">[${i.project || (isManyar ? 'MANYAR' : 'LOSARANG')}]</span>
-                        </div>
-
-                        <div class="vol-row">
-                            <span class="vol-m">VOL M : ${i.volM || 0} M³</span>
-                            <span class="vol-b">VOL B : ${i.volB || 0} M³</span>
-                        </div>
-                        
-                        <div class="info-item">
-                            MUATAN <b>${i.barang ? i.barang.toUpperCase() : '-'}</b>
-                        </div>
-
-                        <div class="info-item">
-                            PENGEMUDI : <b>${i.sopir || '-'}</b>
-                        </div>
-
-                        <div class="info-item bop">
-                            💰 BOP : RP ${(i.bop_unit || 0).toLocaleString('id-ID')}
-                        </div>
-
-                        <div class="info-item jual">
-                            🏷️ HARGA JUAL : RP ${(i.harga_jual || i.hargaJual || i.harga || 0).toLocaleString('id-ID')}
-                        </div>
-                        
-                        ${i.margin_per_unit ? `
-                        <div class="info-item margin">
-                            📈 MARGIN : RP ${i.margin_per_unit.toLocaleString('id-ID')}
-                        </div>
-                        ` : ''}
-                        
-                        <div class="foto-links">
-                            ${i.fotoM ? `<a href="${i.fotoM}" target="_blank">📄 FOTO LOADING</a>` : ''} 
-                            ${i.fotoB ? `| <a href="${i.fotoB}" target="_blank">📄 FOTO BONGKAR</a>` : ''}
-                        </div>
-                    </div>
-                    
-                    <div class="card-footer">
-                        ${statusElement}
-                        <div class="selisih-wrapper">
-                            ${typeof getBadgeSelisih === 'function' ? getBadgeSelisih(i) : ''}
-                        </div>
-                    </div>
-                </div>`;
-            });
-
-            return { otw, totalBop, count };
+        let nomorSuratJalanLengkap = i.noSuratJalan || i.nomor_surat_jalan || i.surat_jalan || i.no_sj;
+        if (!nomorSuratJalanLengkap || nomorSuratJalanLengkap === '-' || nomorSuratJalanLengkap.includes('000/bbs')) {
+            // Menjaga agar penomoran otomatis tetap konsisten sesuai urutan kronologis
+            const safeNo = totalData - index;
+            const stringNomorUrut = String(safeNo).padStart(3, '0');
+            const prefix = isManyar ? 'MYR' : 'BBS';
+            nomorSuratJalanLengkap = `${stringNomorUrut}/${prefix}/${bulanRomawi}/${tahunSekarang}`;
         }
+        
+        const jamMuat = i.jamM || i.jam_muat || i.jam || '';
+        const tglMuat = i.tgl || i.tglM || i.tanggal || '-';
+        const infoWaktu = jamMuat ? `${jamMuat} ※ ${tglMuat}` : tglMuat;
 
-        // Listener Real-time Firebase 1: CHM1
-        onValue(ref(db, `bbs_logs/CHM1`), (snap) => {
-            const result = renderCards(snap.val(), 'log-list-chm', 'CHM1', false);
-            stateCHM.otw = result.otw;
-            stateCHM.bop = result.totalBop;
-            stateCHM.count = result.count;
-            updateCombinedSummary();
-        });
+        const cardThemeClass = isManyar ? 'card-manyar' : 'card-chm';
+        const sjThemeClass = isManyar ? 'sj-number-manyar' : 'sj-number-chm';
+        
+        list.innerHTML += `
+        <div class="truck-card ${cardThemeClass}">
+            <div class="card-header">
+                <span class="${sjThemeClass}">${nomorSuratJalanLengkap}</span>
+                <span class="info-waktu">${infoWaktu}</span>
+            </div>
 
-        // Listener Real-time Firebase 2: MANYAR
-        onValue(ref(db, `bbs_logs/MANYAR`), (snap) => {
-            const result = renderCards(snap.val(), 'log-list-manyar', 'MANYAR', true);
-            stateMANYAR.otw = result.otw;
-            stateMANYAR.bop = result.totalBop;
-            stateMANYAR.count = result.count;
-            updateCombinedSummary();
-        });
+            <div class="card-body">
+                <div class="plat-row">
+                    <span class="plat-text">${i.plat}</span> 
+                    <span class="project-badge">[${i.project || (isManyar ? 'MANYAR' : 'LOSARANG')}]</span>
+                </div>
+
+                <div class="vol-row">
+                    <span class="vol-m">VOL M : ${i.volM || 0} M³</span>
+                    <span class="vol-b">VOL B : ${i.volB || 0} M³</span>
+                </div>
+                
+                <div class="info-item">
+                    MUATAN <b>${i.barang ? i.barang.toUpperCase() : '-'}</b>
+                </div>
+
+                <div class="info-item">
+                    PENGEMUDI : <b>${i.sopir || '-'}</b>
+                </div>
+
+                <div class="info-item bop">
+                    💰 BOP : RP ${(i.bop_unit || 0).toLocaleString('id-ID')}
+                </div>
+
+                <div class="info-item jual">
+                    🏷️ HARGA JUAL : RP ${(i.harga_jual || i.hargaJual || i.harga || 0).toLocaleString('id-ID')}
+                </div>
+                
+                ${i.margin_per_unit ? `
+                <div class="info-item margin">
+                    📈 MARGIN : RP ${i.margin_per_unit.toLocaleString('id-ID')}
+                </div>
+                ` : ''}
+                
+                <div class="foto-links">
+                    ${i.fotoM ? `<a href="${i.fotoM}" target="_blank">📄 FOTO LOADING</a>` : ''} 
+                    ${i.fotoB ? `| <a href="${i.fotoB}" target="_blank">📄 FOTO BONGKAR</a>` : ''}
+                </div>
+            </div>
+            
+            <div class="card-footer">
+                ${statusElement}
+                <div class="selisih-wrapper">
+                    ${typeof getBadgeSelisih === 'function' ? getBadgeSelisih(i) : ''}
+                </div>
+            </div>
+        </div>`;
+    });
+
+    return { otw, totalBop, count };
+}
+
+// Listener Real-time Firebase 1: CHM1
+onValue(ref(db, `bbs_logs/CHM1`), (snap) => {
+    const result = renderCards(snap.val(), 'log-list-chm', 'CHM1', false);
+    stateCHM.otw = result.otw;
+    stateCHM.bop = result.totalBop;
+    stateCHM.count = result.count;
+    updateCombinedSummary();
+});
+
+// Listener Real-time Firebase 2: MANYAR
+onValue(ref(db, `bbs_logs/MANYAR`), (snap) => {
+    const result = renderCards(snap.val(), 'log-list-manyar', 'MANYAR', true);
+    stateMANYAR.otw = result.otw;
+    stateMANYAR.bop = result.totalBop;
+    stateMANYAR.count = result.count;
+    updateCombinedSummary();
+});
     </script>
 </body>
 </html>
