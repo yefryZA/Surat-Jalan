@@ -873,7 +873,6 @@ window.generatePDF = async (item, jamBongkarPasti) => {
     const marginMobil = Number(item.margin_per_unit) || 0;
 
     try {
-   
         await set(ref(db, `bbs_logs/${dbKey}/${window.currentActiveKey}`), {
             ...item,
             volB: vBongkar,
@@ -885,7 +884,6 @@ window.generatePDF = async (item, jamBongkarPasti) => {
 
         alert(`✅ DATA UNIT ${item.plat || ''} BERHASIL DIKUNCI MASUK ARSIP!\nData aman di Firebase & siap ditarik ke laporan global.`);
         
-     
         location.reload();
 
     } catch (error) {
@@ -897,6 +895,12 @@ window.generatePDF = async (item, jamBongkarPasti) => {
 };
 
 window.generatePDFKeseluruhan = async () => {
+    // 🔒 PENGAMAN AWAL SEBELUM GENERATE & ARSIP
+    const konfirmasiAwal = confirm("BANG YEFRY, APAKAH ONGKOS MOBIL SUDAH SESUAI DENGAN VOLUME BONGKAR ⁉️⁉️⁉️");
+    if (!konfirmasiAwal) {
+        return; // Hentikan eksekusi jika diklik CANCEL
+    }
+
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('l', 'mm', 'a4'); 
     
@@ -979,7 +983,7 @@ window.generatePDFKeseluruhan = async () => {
             ]);
         }
 
-// 🚀 2. AMBIL DATA PENGELUARAN OPERASIONAL GLOBAL DARI FIREBASE (HANYA STATUS ACTIVE)
+        // 🚀 2. AMBIL DATA PENGELUARAN OPERASIONAL GLOBAL DARI FIREBASE (HANYA STATUS ACTIVE)
         let totalPengeluaranGlobal = 0;
         const bodyTableOps = []; 
         let noOps = 1;
@@ -1109,39 +1113,38 @@ window.generatePDFKeseluruhan = async () => {
         doc.text(`:`, 74, totalY + 27);
         doc.text(`Rp`, 78, totalY + 27); doc.text(`${akumulasiJual.toLocaleString('id-ID')}`, 125, totalY + 27, { align: "right" });
         
-        // --- ROYALTI PERUSAHAAN 10% (WARNA MERAH) ---
-        doc.setTextColor(231, 76, 60); 
+        // --- ROYALTI PERUSAHAAN 10% (WARNA BIRU) ---
+        doc.setTextColor(41, 128, 185); 
         doc.text(`• ROYALTI PERUSAHAAN (10 %)`, 18, totalY + 32);
         doc.text(`:`, 74, totalY + 32);
         doc.text(`Rp`, 78, totalY + 32); doc.text(`${potonganPerusahaan.toLocaleString('id-ID')}`, 125, totalY + 32, { align: "right" });
         
-        // --- TOTAL PENGELUARAN (KEMBALI KE WARNA HITAM) ---
-        doc.setTextColor(0, 0, 0); 
+        // --- TOTAL PENGELUARAN (WARNA MERAH) ---
+        doc.setTextColor(231, 76, 60); 
         doc.text(`• TOTAL PENGELUARAN`, 18, totalY + 37);
         doc.text(`:`, 74, totalY + 37);
         doc.text(`Rp`, 78, totalY + 37); doc.text(`${totalPengeluaranGlobal.toLocaleString('id-ID')}`, 125, totalY + 37, { align: "right" });
         doc.text(`(Kas/Ops)`, 128, totalY + 37);
 
-        // 🚀 BARIS TOTAL PROFIT BERSIH AKHIR
-    // Atur jenis font dan ukurannya (contoh: 14pt)
-doc.setFont("helvetica", "bold");
-doc.setFontSize(15); // <-- TAMBAHKAN INI (Ganti 14 sesuai kebutuhan)
+        // 🚀 BARIS TOTAL PROFIT BERSIH AKHIR   
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(15);
 
-if (keuntunganBersihFinal >= 0) {
-    doc.setTextColor(46, 204, 113); // Font Warna Hijau Sukses
-    doc.text(`TOTAL PROFIT`, 18, totalY + 44);
-    doc.text(`:`, 74, totalY + 44);
-    doc.text(`Rp`, 78, totalY + 44); 
-    doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
-} else {
-    doc.setTextColor(231, 76, 60); // Font Warna Merah Minus
-    doc.text(`TOTAL MINUS`, 18, totalY + 44);
-    doc.text(`:`, 74, totalY + 44);
-    doc.text(`Rp`, 78, totalY + 44); 
-    doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
-}
-      
-        // 8. TTD Manager Kantor (Kembalikan warna teks ke Hitam murni)
+        if (keuntunganBersihFinal >= 0) {
+            doc.setTextColor(46, 204, 113); // Font Warna Hijau Sukses
+            doc.text(`TOTAL PROFIT`, 18, totalY + 44);
+            doc.text(`:`, 74, totalY + 44);
+            doc.text(`Rp`, 78, totalY + 44); 
+            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
+        } else {
+            doc.setTextColor(231, 76, 60); // Font Warna Merah Minus
+            doc.text(`TOTAL MINUS`, 18, totalY + 44);
+            doc.text(`:`, 74, totalY + 44);
+            doc.text(`Rp`, 78, totalY + 44); 
+            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
+        }
+            
+        // 8. TTD Manager Kantor
         doc.setTextColor(0, 0, 0);
         doc.setFont("helvetica", "normal"); doc.setFontSize(10);
         doc.text("Hormat Kami,", 245, totalY + 6, { align: "center" });
@@ -1156,47 +1159,46 @@ if (keuntunganBersihFinal >= 0) {
         doc.setFontSize(7); doc.setFont("helvetica", "italic"); doc.setTextColor(150, 150, 150);
         doc.text(`E-Laporan dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 54);
 
-        
         // 9. Eksekusi Download PDF Laporan Rekap Massal
         const today = new Date();
         const formatTanggal = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
         
         doc.save(`LAPORAN PENGIRIMAN-${formatTanggal}.pdf`);
         
-      // 10. PROSES UBAH STATUS KE 'ARCHIVE' (Bukan Hapus)
+        // 10. PROSES UBAH STATUS KE 'ARCHIVE' (Bukan Hapus)
         setTimeout(async () => {
-    if (confirm("PROSES CETAK PDF HARIAN SELESAI!\nApakah ingin mengarsip data hari ini? Data 'DONE' & Pengeluaran akan dipindahkan ke ARCHIVE (tidak dihapus).")) {
-        
-        document.getElementById('load-txt').innerText = "MENGARSIPKAN DATA...";
-        document.getElementById('loader').style.display = 'flex';
+            if (confirm("PROSES CETAK PDF HARIAN SELESAI!\nApakah ingin mengarsip data hari ini? Data 'DONE' & Pengeluaran akan dipindahkan ke ARCHIVE (tidak dihapus).")) {
+                
+                document.getElementById('load-txt').innerText = "MENGARSIPKAN DATA...";
+                document.getElementById('loader').style.display = 'flex';
 
-        // 1. Ubah status data Log Mobil 'DONE' menjadi 'ARCHIVE'
-        for (let key in dataLogs) {
-            const item = dataLogs[key];
-            const statusMobil = (item.status || "").toUpperCase();
-            
-            if (statusMobil === 'DONE') {
-                await update(ref(db, `bbs_logs/${dbKey}/${key}`), { status: 'ARCHIVE' });
-            }
-        }
-
-        // 2. Ubah status Pengeluaran Operasional 'ACTIVE' menjadi 'ARCHIVE' (JANGAN DI-REMOVE!)
-        const snapOps = await get(ref(db, `bbs_operasional/${dbKey}`));
-        if (snapOps.exists()) {
-            const dataOps = snapOps.val();
-            for (let keyOps in dataOps) {
-                const statusOps = (dataOps[keyOps].status || 'ACTIVE').toUpperCase();
-                if (statusOps === 'ACTIVE') {
-                    await update(ref(db, `bbs_operasional/${dbKey}/${keyOps}`), { status: 'ARCHIVE' });
+                // 1. Ubah status data Log Mobil 'DONE' menjadi 'ARCHIVE'
+                for (let key in dataLogs) {
+                    const item = dataLogs[key];
+                    const statusMobil = (item.status || "").toUpperCase();
+                    
+                    if (statusMobil === 'DONE') {
+                        await update(ref(db, `bbs_logs/${dbKey}/${key}`), { status: 'ARCHIVE' });
+                    }
                 }
+
+                // 2. Ubah status Pengeluaran Operasional 'ACTIVE' menjadi 'ARCHIVE'
+                const snapOps = await get(ref(db, `bbs_operasional/${dbKey}`));
+                if (snapOps.exists()) {
+                    const dataOps = snapOps.val();
+                    for (let keyOps in dataOps) {
+                        const statusOps = (dataOps[keyOps].status || 'ACTIVE').toUpperCase();
+                        if (statusOps === 'ACTIVE') {
+                            await update(ref(db, `bbs_operasional/${dbKey}/${keyOps}`), { status: 'ARCHIVE' });
+                        }
+                    }
+                }
+                
+                document.getElementById('loader').style.display = 'none';
+                alert("PROSES ARSIP SELESAI!\nData 'DONE' dan Pengeluaran Harian telah diarsipkan dan aman di Firebase untuk rekap 100 Rit nanti.\nLayar harian kembali bersih.");
+                location.reload();
             }
-        }
-        
-        document.getElementById('loader').style.display = 'none';
-        alert("PROSES ARSIP SELESAI!\nData 'DONE' dan Pengeluaran Harian telah diarsipkan dan aman di Firebase untuk rekap 100 Rit nanti.\nLayar harian kembali bersih.");
-        location.reload();
-    }
-}, 1000);
+        }, 1000);
 
     } catch (err) {
         alert("Gagal memproses Laporan PDF Keseluruhan: " + err.message);
