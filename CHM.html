@@ -161,20 +161,13 @@
         <input type="text" id="m-project" placeholder="PROJECT" style="font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 16px; color: #ffffff;">
         
         <label class="lbl">DETAIL MUATAN</label>
-        <!-- Ditambahkan event oninput untuk update label otomatis -->
         <input type="text" id="m-barang" placeholder="MUATAN" oninput="updateLabelDynamic()" style="font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 16px; color: #ffffff;">
 
-        <!-- P, L, T Dibuat Tebal & Kontras -->
-        <div style="display:flex; gap:5px; margin-bottom:10px;">
-            <input type="number" id="m-p" placeholder="P (m)" step="0.01" style="flex:1; padding:12px; border-radius:8px; border:1px solid #666; background:#1a1a1a; color:#ffffff; font-family:'Arial Black', sans-serif; font-weight:900; font-size:16px;">
-            <input type="number" id="m-l" placeholder="L (m)" step="0.01" style="flex:1; padding:12px; border-radius:8px; border:1px solid #666; background:#1a1a1a; color:#ffffff; font-family:'Arial Black', sans-serif; font-weight:900; font-size:16px;">
-            <input type="number" id="m-t" placeholder="T (m)" step="0.01" style="flex:1; padding:12px; border-radius:8px; border:1px solid #666; background:#1a1a1a; color:#ffffff; font-family:'Arial Black', sans-serif; font-weight:900; font-size:16px;">
-        </div>
-
-        <!-- TOTAL VOLUME -->
-        <input type="number" id="m-vol" placeholder="TOTAL VOLUME (M3)" step="0.01" readonly style="background:#222; color:#ffd700; font-family:'Arial Black', sans-serif; font-weight:900; font-size:18px; border:2px dashed #ffd700;">
+        <!-- TOTAL VOLUME (Dibuat input langsung, readonly dihapus) -->
+        <label class="lbl">TOTAL VOLUME</label>
+        <input type="number" id="m-vol" placeholder="TOTAL VOLUME (M3)" step="0.01" style="background:#1a1a1a; color:#ffffff; font-family:'Arial Black', sans-serif; font-weight:900; font-size:18px; border:1px solid #666; padding:12px; margin-bottom:10px;">
         
-        <!-- HARGA MATERIAL (Label berubah otomatis berdasarkan muatan) -->
+        <!-- HARGA MATERIAL -->
         <label class="lbl" id="lbl-mat" style="color:var(--gold); font-weight:bold;">⚙️ HARGA MATERIAL / M³ (RP)</label>
         <input type="text" id="m-ops-material" inputmode="numeric" pattern="[0-9]*" placeholder="0.00" style="border: 1px solid var(--gold); font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88; background: #111;" oninput="formatRupiahOtomatis(this)">
         
@@ -304,21 +297,19 @@ async function printSuratJalan(data) {
             <div style="font-family: monospace; width: 100%; font-size: 12px;">
                 
                 <table style="width: 100%; border-collapse: collapse; font-family: monospace; font-size: 12px; table-layout: fixed;">
-                    <tr><td style="width: 75px;">TGL/JAM</td><td style="width: 15px;">:</td><td>${tgl} ‖ ${jam}</td></tr>
-                    <tr><td>PLAT NO</td><td>:</td><td>${data.plat}</td></tr>
-                    <tr><td>SOPIR</td><td>:</td><td>${data.sopir || "-"}</td></tr>
-                    <tr><td>BARANG</td><td>:</td><td>${data.barang || "-"}</td></tr>
-                    
-                    <tr>
-                        <td colspan="3" style="padding: 5px 0;">
-                            -----------------------------------------------<br>
-                            panjang : ${data.p||0} ‖ lebar : ${data.l||0} ‖ tinggi : ${data.t||0} (m)<br>
-                            -----------------------------------------------
-                        </td>
-                    </tr>
-
-                    <tr><td>TOTAL MUAT</td><td>:</td><td><b>${data.volM || 0} M3</b></td></tr>
-                </table>
+    <tr><td style="width: 75px;">TGL/JAM</td><td style="width: 15px;">:</td><td>${tgl} ‖ ${jam}</td></tr>
+    <tr><td>PLAT NO</td><td>:</td><td>${data.plat}</td></tr>
+    <tr><td>SOPIR</td><td>:</td><td>${data.sopir || "-"}</td></tr>
+    <tr><td>BARANG</td><td>:</td><td>${data.barang || "-"}</td></tr>
+    
+    <tr>
+        <td colspan="3" style="padding: 5px 0;">
+            -----------------------------------------------<br>
+            TOTAL MUAT : <b>${data.volM || 0} M3</b><br>
+            -----------------------------------------------
+        </td>
+    </tr>
+</table>
                 
                 <div style="text-align: center; padding: 8px 0; margin: 10px 0; border: 1px solid black; border-radius: 4px;">
                     <div style="font-size: 11px; color: #444; font-weight: bold; text-transform: uppercase;">Nomor Surat Jalan</div>
@@ -396,16 +387,13 @@ window.prosesMuat = async () => {
     const b = document.getElementById('m-barang').value.toUpperCase().trim();
     const v = Number(document.getElementById('m-vol').value) || 0;
     
-    const p_dim = document.getElementById('m-p').value;
-    const l_dim = document.getElementById('m-l').value;
-    const t_dim = document.getElementById('m-t').value;
     const proj = document.getElementById('m-project').value.toUpperCase().trim();
     
     const rawMaterial = document.getElementById('m-ops-material').value;
     const rawMobil = document.getElementById('m-ops-mobil').value;
     
-    // VALIDASI
-    if(!p || !s || !b || !v || !p_dim || !l_dim || !t_dim || !proj || !rawMaterial || !rawMobil) {
+    // VALIDASI (Tanpa p_dim, l_dim, t_dim)
+    if(!p || !s || !b || !v || !proj || !rawMaterial || !rawMobil) {
         return alert("LENGKAPI SEMUA DATA termasuk PROJECT TUJUAN & BIAYA BOP!");
     }
     
@@ -438,9 +426,9 @@ window.prosesMuat = async () => {
         sopir: s, 
         barang: b, 
         project: proj, 
-        p: Number(p_dim), 
-        l: Number(l_dim), 
-        t: Number(t_dim),
+        p: 0, 
+        l: 0,
+        t: 0,
         volM: v, 
         volB: 0, 
         
