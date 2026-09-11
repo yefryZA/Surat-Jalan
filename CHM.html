@@ -1380,7 +1380,7 @@ const loadImageAsBase64 = (src) => {
 window.konfirmasiGenerate100Rit = async () => {
     // 1. PIN KEAMANAN UNTUK PENGARSIPAN TOTAL
     const KODE_RAHASIA = "BBS";
-    const inputKode = prompt("⚠️ PERINGATAN GENERATE 100 RIT:\n\nMasukkan PIN Keamanan untuk mencetak Rekap 100 Rit dan MENGHAPUS TOTAL data arsip di Firebase:");
+    const inputKode = prompt("⚠️ PERINGATAN GENERATE 100 RIT:\n\nMasukkan PIN Keamanan untuk memproses Laporan Rekapitulasi 100 Rit:");
     
     if (inputKode === null) return;
     if (inputKode !== KODE_RAHASIA) {
@@ -1480,9 +1480,9 @@ window.konfirmasiGenerate100Rit = async () => {
             return alert("Belum ada data berstatus 'ARCHIVE' untuk di-generate. Pastikan sudah pernah melakukan PDF Harian terlebih dahulu.");
         }
 
-        // KONFIRMASI TERAKHIR
-        const yakin = confirm(`Ditemukan ${totalRitase} Rit data ARCHIVE.\n\nSistem akan mencetak PDF Rekapitulasi 100 Rit (A4 Landscape) dan MENGHAPUS TOTAL data tersimpan di Firebase.\n\nYakin ingin memproses?`);
-        if (!yakin) return;
+      // 1. KONFIRMASI PEMBUATAN PDF
+        const yakinCetak = confirm(`Ditemukan ${totalRitase} Rit data ARCHIVE.\n\nSistem akan mencetak PDF Rekapitulasi 100 Rit (A4 Landscape).\n\nYakin ingin memproses?`);
+        if (!yakinCetak) return;
 
         // 3. AMBIL HANYA DATA PENGELUARAN OPERASIONAL YANG BERSTATUS 'ARCHIVE'
         let totalPengeluaranOps = 0;
@@ -1493,7 +1493,7 @@ window.konfirmasiGenerate100Rit = async () => {
             const dataOps = snapOps.val();
             Object.keys(dataOps).forEach(k => {
                 const o = dataOps[k];
-                const statusOps = (o.status || 'ARCHIVE').toUpperCase(); // Default ke ARCHIVE jika data lama belum ada field status
+                const statusOps = (o.status || 'ARCHIVE').toUpperCase();
 
                 if (statusOps === 'ARCHIVE') {
                     const nominalVal = Number(o.nom) || 0;
@@ -1511,15 +1511,14 @@ window.konfirmasiGenerate100Rit = async () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
 
-        if (kopBase64) {
-            doc.addImage(kopBase64, 'JPEG', 14, 8, 45, 18);
-        }
-
+        // --- HEADER CENTER TANPA KOP GAMBAR ---
+        // Lebar A4 Landscape = 297mm. Titik Tengah (Center) = 148.5mm
         doc.setFontSize(14); doc.setFont("helvetica", "bold");
-        doc.text("LAPORAN REKAPITULASI 100RIT KIRIMAN MATERIAL", 283, 14, { align: "right" });
+        doc.text("LAPORAN REKAPITULASI 100 RIT KIRIMAN MATERIAL", 148.5, 16, { align: "center" });
         doc.setFontSize(11); doc.setFont("helvetica", "normal");
-        doc.text("PT. BERKAH BAJA STEEL", 283, 20, { align: "right" });
+        doc.text("PT. BERKAH BAJA STELL", 148.5, 22, { align: "center" });
 
+        // --- TABEL DATA ---
         doc.autoTable({
             head: [['NO', 'TANGGAL', 'PLAT NO', 'SOPIR', 'PROJECT', 'BARANG', 'M / B (M3)', '+/-', 'TOTAL BOP', 'HARGA JUAL', 'PROFIT/MARGIN']],
             body: bodyTableMassal,
@@ -1532,6 +1531,7 @@ window.konfirmasiGenerate100Rit = async () => {
                 `Rp ${akumulasiProfitKotor.toLocaleString('id-ID')}`
             ]],
             startY: 28,
+            showFoot: 'lastPage', // Footer tabel hanya muncul di halaman terakhir
             theme: 'grid',
             styles: { fontSize: 8, halign: 'center', cellPadding: 2 },
             headStyles: { fillColor: [44, 62, 80], fontStyle: 'bold' },
@@ -1592,7 +1592,7 @@ window.konfirmasiGenerate100Rit = async () => {
 
         // --- TOTAL PROFIT / MINUS BERSIH ---
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(14); // <-- Ditambahkan agar font lebih besar
+        doc.setFontSize(14);
 
         if (keuntunganBersihFinal >= 0) {
             doc.setTextColor(46, 204, 113);
@@ -1614,7 +1614,6 @@ window.konfirmasiGenerate100Rit = async () => {
         doc.text("Hormat Kami,", 245, totalY + 6, { align: "center" });
         
         if (ttdBase64) {
-            // Posisi X disesuaikan ke 230 dengan lebar 30mm x 20mm agar simetris di tengah
             doc.addImage(ttdBase64, 'PNG', 230, totalY + 10, 30, 20);
         }
 
@@ -1628,20 +1627,27 @@ window.konfirmasiGenerate100Rit = async () => {
         doc.setFontSize(7); doc.setFont("helvetica", "italic"); doc.setTextColor(150, 150, 150);
         doc.text(`E-Laporan 100 Rit dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 54);
 
+        // ALWAYS DOWNLOAD PDF FIRST
         doc.save(`REKAP-100RIT-${skrg.getDate()}-${skrg.getMonth()+1}-${skrg.getFullYear()}.pdf`);
 
-        // --- PROSES HAPUS PERMANEN DATA ARCHIVE DARI FIREBASE ---
-        document.getElementById('load-txt').innerText = "MENGHAPUS DATA ARCHIVE & OPERASIONAL DARI FIREBASE...";
-        document.getElementById('loader').style.display = 'flex';
+        // --- PERTANYAAN OPSI HAPUS DATA ---
+        const yakinHapus = confirm(`PDF Rekapitulasi berhasil didownload.\n\nApakah Anda ingin MENGHAPUS PERMANEN seluruh data ARCHIVE (${totalRitase} Rit) & Operasional dari Firebase?`);
 
-        // Menggunakan Promise.all agar eksekusi hapus serentak (jauh lebih efisien)
-        const deleteLogPromises = deleteLogKeys.map(k => remove(ref(db, `bbs_logs/${dbKey}/${k}`)));
-        const deleteOpsPromises = deleteOpsKeys.map(kOps => remove(ref(db, `bbs_operasional/${dbKey}/${kOps}`)));
+        if (yakinHapus) {
+            document.getElementById('load-txt').innerText = "MENGHAPUS DATA ARCHIVE & OPERASIONAL DARI FIREBASE...";
+            document.getElementById('loader').style.display = 'flex';
 
-        await Promise.all([...deleteLogPromises, ...deleteOpsPromises]);
+            const deleteLogPromises = deleteLogKeys.map(k => remove(ref(db, `bbs_logs/${dbKey}/${k}`)));
+            const deleteOpsPromises = deleteOpsKeys.map(kOps => remove(ref(db, `bbs_operasional/${dbKey}/${kOps}`)));
 
-        document.getElementById('loader').style.display = 'none';
-        alert(`🔥 SUKSES TOTAL!\n\nLaporan Rekap 100 Rit (PT. BERKAH BAJA STEEL) telah terdownload.\n- ${totalRitase} data ARCHIVE dibersihkan.\n- Total Pengeluaran ARCHIVE Rp ${totalPengeluaranOps.toLocaleString('id-ID')} telah dibersihkan.`);
+            await Promise.all([...deleteLogPromises, ...deleteOpsPromises]);
+
+            document.getElementById('loader').style.display = 'none';
+            alert(`🔥 SUKSES!\n\nLaporan terdownload & data Firebase telah dibersihkan.`);
+        } else {
+            alert(`📄 SUKSES!\n\nLaporan terdownload. Data di Firebase TETAP TERSIMPAN.`);
+        }
+
         location.reload();
 
     } catch (err) {
