@@ -1415,9 +1415,8 @@ window.konfirmasiGenerate100Rit = async () => {
         let volB_Split12 = 0;
         let volB_Screening = 0;
         let volB_AbuBatu = 0;
-        let volB_Lainnya = 0;
 
-        const deletePromises = [];
+        const deleteLogKeys = [];
         const bodyTableMassal = [];
         let totalRitase = 0;
 
@@ -1452,8 +1451,6 @@ window.konfirmasiGenerate100Rit = async () => {
                     volB_Screening += vBongkar;
                 } else if (namaBarang.includes("ABU BATU") || namaBarang.includes("ABU")) {
                     volB_AbuBatu += vBongkar;
-                } else {
-                    volB_Lainnya += vBongkar;
                 }
 
                 bodyTableMassal.push([
@@ -1470,7 +1467,7 @@ window.konfirmasiGenerate100Rit = async () => {
                     marginProfit !== 0 ? `Rp ${marginProfit.toLocaleString('id-ID')}` : '-'
                 ]);
 
-                deletePromises.push(key);
+                deleteLogKeys.push(key);
             }
         });
 
@@ -1480,7 +1477,7 @@ window.konfirmasiGenerate100Rit = async () => {
             return alert("Belum ada data berstatus 'ARCHIVE' untuk di-generate. Pastikan sudah pernah melakukan PDF Harian terlebih dahulu.");
         }
 
-      // 1. KONFIRMASI PEMBUATAN PDF
+        // 1. KONFIRMASI PEMBUATAN PDF
         const yakinCetak = confirm(`Ditemukan ${totalRitase} Rit data ARCHIVE.\n\nSistem akan mencetak PDF Rekapitulasi 100 Rit (A4 Landscape).\n\nYakin ingin memproses?`);
         if (!yakinCetak) return;
 
@@ -1512,7 +1509,6 @@ window.konfirmasiGenerate100Rit = async () => {
         const doc = new jsPDF('l', 'mm', 'a4');
 
         // --- HEADER CENTER TANPA KOP GAMBAR ---
-        // Lebar A4 Landscape = 297mm. Titik Tengah (Center) = 148.5mm
         doc.setFontSize(14); doc.setFont("helvetica", "bold");
         doc.text("LAPORAN REKAPITULASI 100 RIT KIRIMAN MATERIAL", 148.5, 16, { align: "center" });
         doc.setFontSize(11); doc.setFont("helvetica", "normal");
@@ -1531,7 +1527,7 @@ window.konfirmasiGenerate100Rit = async () => {
                 `Rp ${akumulasiProfitKotor.toLocaleString('id-ID')}`
             ]],
             startY: 28,
-            showFoot: 'lastPage', // Footer tabel hanya muncul di halaman terakhir
+            showFoot: 'lastPage',
             theme: 'grid',
             styles: { fontSize: 8, halign: 'center', cellPadding: 2 },
             headStyles: { fillColor: [44, 62, 80], fontStyle: 'bold' },
@@ -1547,14 +1543,11 @@ window.konfirmasiGenerate100Rit = async () => {
         let totalY = doc.lastAutoTable.finalY + 8;
         if (totalY > 140) { doc.addPage(); totalY = 20; }
 
-        let textBreakdown = `[ Split 1/2: ${volB_Split12.toFixed(2)} M³ | Screening: ${volB_Screening.toFixed(2)} M³ | Abu Batu: ${volB_AbuBatu.toFixed(2)} M³`;
-        if (volB_Lainnya > 0) {
-            textBreakdown += ` | Lainnya: ${volB_Lainnya.toFixed(2)} M³`;
-        }
-        textBreakdown += ` ]`;
+        // --- RINCIAN BONGKAR HANYA SPLIT 1/2, SCREENING, ABU BATU ---
+        const textBreakdown = `[ Split 1/2: ${volB_Split12.toFixed(2)} M³ | Screening: ${volB_Screening.toFixed(2)} M³ | Abu Batu: ${volB_AbuBatu.toFixed(2)} M³ ]`;
 
         doc.setFillColor(245, 247, 250);
-        doc.rect(14, totalY, 165, 50, "F"); 
+        doc.rect(14, totalY, 165, 52, "F"); 
         
         doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
         doc.text("RINGKASAN FINANSIAL KESELURUHAN (100 RIT) :", 18, totalY + 6);
@@ -1580,32 +1573,34 @@ window.konfirmasiGenerate100Rit = async () => {
         doc.text(`:`, 74, totalY + 27);
         doc.text(`Rp`, 78, totalY + 27); doc.text(`${akumulasiJual.toLocaleString('id-ID')}`, 125, totalY + 27, { align: "right" });
 
-        doc.setTextColor(0, 0, 0); 
-        doc.text(`• TOTAL PENGELUARAN (Kas/Ops)`, 18, totalY + 32);
-        doc.text(`:`, 74, totalY + 32);
-        doc.text(`Rp`, 78, totalY + 32); doc.text(`${totalPengeluaranOps.toLocaleString('id-ID')}`, 125, totalY + 32, { align: "right" });
+        // --- MERAH MENYALA DENGAN JARAK TAMBAHAN (+2mm) ---
+        doc.setTextColor(255, 0, 0); 
+        doc.text(`• TOTAL PENGELUARAN (Kas/Ops)`, 18, totalY + 34);
+        doc.text(`:`, 74, totalY + 34);
+        doc.text(`Rp`, 78, totalY + 34); doc.text(`${totalPengeluaranOps.toLocaleString('id-ID')}`, 125, totalY + 34, { align: "right" });
         
-        doc.setTextColor(231, 76, 60); 
-        doc.text(`• ROYALTI PERUSAHAAN (10 %)`, 18, totalY + 37);
-        doc.text(`:`, 74, totalY + 37);
-        doc.text(`Rp`, 78, totalY + 37); doc.text(`${potonganPerusahaan.toLocaleString('id-ID')}`, 125, totalY + 37, { align: "right" });
+        // --- BIRU MENYALA ---
+        doc.setTextColor(0, 102, 255); 
+        doc.text(`• ROYALTI PERUSAHAAN (10 %)`, 18, totalY + 39);
+        doc.text(`:`, 74, totalY + 39);
+        doc.text(`Rp`, 78, totalY + 39); doc.text(`${potonganPerusahaan.toLocaleString('id-ID')}`, 125, totalY + 39, { align: "right" });
 
         // --- TOTAL PROFIT / MINUS BERSIH ---
         doc.setFont("helvetica", "bold");
         doc.setFontSize(14);
 
         if (keuntunganBersihFinal >= 0) {
-            doc.setTextColor(46, 204, 113);
-            doc.text(`TOTAL PROFIT BERSIH`, 18, totalY + 44);
-            doc.text(`:`, 74, totalY + 44);
-            doc.text(`Rp`, 78, totalY + 44); 
-            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
+            doc.setTextColor(46, 204, 113); // Hijau
+            doc.text(`TOTAL PROFIT BERSIH`, 18, totalY + 46);
+            doc.text(`:`, 74, totalY + 46);
+            doc.text(`Rp`, 78, totalY + 46); 
+            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 46, { align: "right" });
         } else {
-            doc.setTextColor(231, 76, 60);
-            doc.text(`TOTAL MINUS`, 18, totalY + 44);
-            doc.text(`:`, 74, totalY + 44);
-            doc.text(`Rp`, 78, totalY + 44); 
-            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 44, { align: "right" });
+            doc.setTextColor(255, 0, 0); // Merah Menyala jika minus
+            doc.text(`TOTAL MINUS`, 18, totalY + 46);
+            doc.text(`:`, 74, totalY + 46);
+            doc.text(`Rp`, 78, totalY + 46); 
+            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 46, { align: "right" });
         }
 
         // --- TANDA TANGAN MANAGER ---
@@ -1625,7 +1620,7 @@ window.konfirmasiGenerate100Rit = async () => {
 
         const skrg = new Date();
         doc.setFontSize(7); doc.setFont("helvetica", "italic"); doc.setTextColor(150, 150, 150);
-        doc.text(`E-Laporan 100 Rit dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 54);
+        doc.text(`E-Laporan 100 Rit dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 56);
 
         // ALWAYS DOWNLOAD PDF FIRST
         doc.save(`REKAP-100RIT-${skrg.getDate()}-${skrg.getMonth()+1}-${skrg.getFullYear()}.pdf`);
