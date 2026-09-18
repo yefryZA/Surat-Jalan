@@ -115,6 +115,9 @@
         <button class="btn" style="background:#f1c40f; color:#000000; font-weight:bold; font-family:'Orbitron'; font-size: 11px; padding: 12px 15px; border: none; border-radius: 8px; cursor: pointer; flex: 1; min-width: 180px; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 60px;" onclick="window.konfirmasiGenerate100Rit()">
             📦 GENERATE 100 RIT
         </button>
+        <button class="btn" style="background:#1af10f; color:#000000; font-weight:bold; font-family:'Orbitron'; font-size: 11px; padding: 12px 15px; border: none; border-radius: 8px; cursor: pointer; flex: 1; min-width: 180px; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 60px;" onclick="window.konfirmasiGenerate100Rit()">
+    📅 Generate Rekap Bulanan
+</button>
         
     </div>
 
@@ -496,9 +499,12 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
             const i = data[k];
             const statusMobil = (i.status || "").toUpperCase();
             
-            if(statusMobil === 'ARCHIVE') return;
+            // 🛑 ABAIKAN DATA YANG BERSTATUS 'ARCHIVE' ATAU 'FILE'
+            // Hanya status aktif (seperti OTW, DONE, dsb) yang akan diproses
+            if(statusMobil === 'ARCHIVE' || statusMobil === 'FILE') return;
 
-            tm += i.volM; tb += i.volB; 
+            tm += (Number(i.volM) || 0); 
+            tb += (Number(i.volB) || 0); 
             
             rawData.push({ ...i, firebaseKey: k });
             
@@ -601,7 +607,7 @@ onValue(ref(db, `bbs_logs/${dbKey}`), async (snap) => {
             <!-- Link Foto conditionally disajikan -->
             <div style="font-size: 12px; margin-top: 8px; margin-bottom: 4px;">
                 ${i.fotoM ? `<a href="${i.fotoM}" target="_blank" style="color:#4caf50; font-weight: bold; text-decoration: none;">📄 FOTO SAAT LOADING</a>` : ''} 
-                ${i.fotoB ? `${i.fotoM ? '| ' : ''}<a href="${i.fotoB}" target="_blank" style="color:var(--gold); font-weight: bold; text-decoration: none;">📄 FOTO BONGKAR</a>` : ''}
+                ${i.fotoB ? `${i.fotoM ? '\vert{} ' : ''}<a href="${i.fotoB}" target="_blank" style="color:var(--gold); font-weight: bold; text-decoration: none;">📄 FOTO BONGKAR</a>` : ''}
             </div>
 
             <div style="width: 100%; display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-top: 4px;">
@@ -892,7 +898,7 @@ window.generatePDFKeseluruhan = async () => {
         title: '⚠️ PERINGATAN PENTING!',
         html: `
             <div style="font-size: 20px; font-weight: bold; color: #d33; line-height: 1.5; margin-top: 10px;">
-                APAKAH ONGKOS MOBIL SUDAH SESUAI & PENGELUARAN SUDAH TERCATAT ⁉️⁉️⁉️
+                BANG YEFRY, APAKAH ONGKOS MOBIL SUDAH SESUAI DENGAN VOLUME BONGKAR ⁉️⁉️⁉️
             </div>
         `,
         icon: 'warning',
@@ -1625,22 +1631,22 @@ window.konfirmasiGenerate100Rit = async () => {
         // ALWAYS DOWNLOAD PDF FIRST
         doc.save(`REKAP-100RIT-${skrg.getDate()}-${skrg.getMonth()+1}-${skrg.getFullYear()}.pdf`);
 
-        // --- PERTANYAAN OPSI HAPUS DATA ---
-        const yakinHapus = confirm(`PDF Rekapitulasi berhasil didownload.\n\nApakah Anda ingin MENGHAPUS PERMANEN seluruh data ARCHIVE (${totalRitase} Rit) & Operasional dari Firebase?`);
+        // --- PERTANYAAN OPSI MERUBAH STATUS MENJADI 'FILE' ---
+        const yakinArsip = confirm(`PDF Rekapitulasi 100 Rit berhasil didownload.\n\nApakah Anda ingin mengarsipkan seluruh data ini (${totalRitase} Rit) menjadi status 'FILE' agar siap untuk Rekap Bulanan?`);
 
-        if (yakinHapus) {
-            document.getElementById('load-txt').innerText = "MENGHAPUS DATA ARCHIVE & OPERASIONAL DARI FIREBASE...";
+        if (yakinArsip) {
+            document.getElementById('load-txt').innerText = "MENGUPDATE STATUS DATA MENJADI 'FILE'...";
             document.getElementById('loader').style.display = 'flex';
 
-            const deleteLogPromises = deleteLogKeys.map(k => remove(ref(db, `bbs_logs/${dbKey}/${k}`)));
-            const deleteOpsPromises = deleteOpsKeys.map(kOps => remove(ref(db, `bbs_operasional/${dbKey}/${kOps}`)));
+            const updateLogPromises = deleteLogKeys.map(k => update(ref(db, `bbs_logs/${dbKey}/${k}`), { status: 'FILE' }));
+            const updateOpsPromises = deleteOpsKeys.map(kOps => update(ref(db, `bbs_operasional/${dbKey}/${kOps}`), { status: 'FILE' }));
 
-            await Promise.all([...deleteLogPromises, ...deleteOpsPromises]);
+            await Promise.all([...updateLogPromises, ...updateOpsPromises]);
 
             document.getElementById('loader').style.display = 'none';
-            alert(`🔥 SUKSES!\n\nLaporan terdownload & data Firebase telah dibersihkan.`);
+            alert(`🔥 SUKSES!\n\nLaporan terdownload & status data di Firebase diubah menjadi 'FILE'. Data siap untuk rekap bulanan.`);
         } else {
-            alert(`📄 SUKSES!\n\nLaporan terdownload. Data di Firebase TETAP TERSIMPAN.`);
+            alert(`📄 SUKSES!\n\nLaporan terdownload. Status data di Firebase TETAP 'ARCHIVE'.`);
         }
 
         location.reload();
@@ -1649,6 +1655,242 @@ window.konfirmasiGenerate100Rit = async () => {
         console.error(err);
         document.getElementById('loader').style.display = 'none';
         alert("Gagal memproses Generate 100 Rit: " + err.message);
+    }
+};
+
+window.konfirmasiGenerateBulanan = async () => {
+    const inputBulanTahun = prompt("📅 MASUKKAN BULAN & TAHUN REKAPITULASI:\n\nFormat: MM/YYYY (Contoh: 08/2026 untuk Agustus 2026)");
+    if (!inputBulanTahun) return;
+
+    const [targetBulan, targetTahun] = inputBulanTahun.split('/');
+    if (!targetBulan || !targetTahun || targetBulan.length !== 2 || targetTahun.length !== 4) {
+        return alert("❌ FORMAT SALAH! Gunakan format MM/YYYY (Contoh: 08/2026).");
+    }
+
+    document.getElementById('load-txt').innerText = `MENARIK DATA BULAN ${inputBulanTahun}...`;
+    document.getElementById('loader').style.display = 'flex';
+
+    try {
+        const [snapshotLogs, snapshotOps] = await Promise.all([
+            get(ref(db, `bbs_logs/${dbKey}`)),
+            get(ref(db, `bbs_operasional/${dbKey}`))
+        ]);
+
+        if (!snapshotLogs.exists()) {
+            document.getElementById('loader').style.display = 'none';
+            return alert("BELUM ADA DATA LOGS DI FIREBASE!");
+        }
+
+        const dataLogs = snapshotLogs.val();
+        let totalRitase = 0;
+        let akumulasiVolM = 0, akumulasiVolB = 0;
+        let akumulasiBop = 0, akumulasiJual = 0, akumulasiProfitKotor = 0;
+        let volB_Split12 = 0, volB_Screening = 0, volB_AbuBatu = 0;
+
+        const bodyTableBulanan = [];
+        const deleteLogKeys = [];
+
+        // 1. FILTER DATA LOGS BERSTATUS 'FILE' SESUAI BULAN & TAHUN
+        Object.keys(dataLogs).forEach(key => {
+            const item = dataLogs[key];
+            const statusMobil = (item.status || "").toUpperCase();
+            const tglStr = item.tgl || item.tanggal || ""; // Format: 20/8/2026 atau 20/08/2026
+
+            if (statusMobil === 'FILE' && tglStr) {
+                const parts = tglStr.split('/'); // [DD, MM, YYYY]
+                if (parts.length === 3) {
+                    const blnData = parts[1].padStart(2, '0');
+                    const thnData = parts[2];
+
+                    if (blnData === targetBulan && thnData === targetTahun) {
+                        totalRitase++;
+
+                        const vMuat = Number(item.volM) || 0;
+                        const vBongkar = Number(item.volB) || Number(item.volume) || 0;
+                        const lossLebih = vBongkar - vMuat;
+                        const totalBop = Number(item.bop_unit) || (Number(item.bop_material) || 0) + (Number(item.bop_mobil) || 0);
+                        const hargaJual = Number(item.harga_jual) || Number(item.hargaJual) || 0;
+                        const marginProfit = Number(item.margin_per_unit) || (hargaJual - totalBop);
+
+                        akumulasiVolM += vMuat;
+                        akumulasiVolB += vBongkar;
+                        akumulasiBop += totalBop;
+                        akumulasiJual += hargaJual;
+                        akumulasiProfitKotor += marginProfit;
+
+                        const namaBarang = (item.barang || item.namaBarang || "").toUpperCase().trim();
+                        if (namaBarang.includes("SPLIT 1") || namaBarang.includes("SPLIT 1/2") || namaBarang.includes("SPLIT 1.2")) {
+                            volB_Split12 += vBongkar;
+                        } else if (namaBarang.includes("SCREENING") || namaBarang.includes("SCRENING")) {
+                            volB_Screening += vBongkar;
+                        } else if (namaBarang.includes("ABU BATU") || namaBarang.includes("ABU")) {
+                            volB_AbuBatu += vBongkar;
+                        }
+
+                        bodyTableBulanan.push([
+                            totalRitase,
+                            tglStr,
+                            item.plat || '-',
+                            item.sopir || '-',
+                            item.project || 'LOSARANG',
+                            namaBarang || '-',
+                            `${vMuat.toFixed(2)} / ${vBongkar.toFixed(2)}`,
+                            (lossLebih > 0 ? "+" : "") + lossLebih.toFixed(2),
+                            `Rp ${totalBop.toLocaleString('id-ID')}`,
+                            hargaJual > 0 ? `Rp ${hargaJual.toLocaleString('id-ID')}` : '-',
+                            marginProfit !== 0 ? `Rp ${marginProfit.toLocaleString('id-ID')}` : '-'
+                        ]);
+
+                        deleteLogKeys.push(key);
+                    }
+                }
+            }
+        });
+
+        // 2. FILTER DATA OPERASIONAL BERSTATUS 'FILE' SESUAI BULAN & TAHUN
+        let totalPengeluaranOps = 0;
+        const deleteOpsKeys = [];
+
+        if (snapshotOps.exists()) {
+            const dataOps = snapshotOps.val();
+            Object.keys(dataOps).forEach(k => {
+                const o = dataOps[k];
+                const statusOps = (o.status || "").toUpperCase();
+                const tglOps = o.tgl || o.tanggal || "";
+
+                if (statusOps === 'FILE' && tglOps) {
+                    const parts = tglOps.split('/');
+                    if (parts.length === 3) {
+                        const blnOps = parts[1].padStart(2, '0');
+                        const thnOps = parts[2];
+
+                        if (blnOps === targetBulan && thnOps === targetTahun) {
+                            totalPengeluaranOps += Number(o.nom) || 0;
+                            deleteOpsKeys.push(k);
+                        }
+                    }
+                }
+            });
+        }
+
+        document.getElementById('loader').style.display = 'none';
+
+        if (totalRitase === 0) {
+            return alert(`Tidak ditemukan data berstatus 'FILE' untuk periode ${inputBulanTahun}.`);
+        }
+
+        // 3. FINANSIAL & PDF GENERATION
+        const potonganPerusahaan = akumulasiProfitKotor > 0 ? Math.round(akumulasiProfitKotor * 0.10) : 0;
+        const keuntunganBersihFinal = akumulasiProfitKotor - totalPengeluaranOps - potonganPerusahaan;
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
+
+        doc.setFontSize(14); doc.setFont("helvetica", "bold");
+        doc.text(`LAPORAN REKAPITULASI BULANAN (${inputBulanTahun})`, 148.5, 16, { align: "center" });
+        doc.setFontSize(11); doc.setFont("helvetica", "normal");
+        doc.text("PT. BERKAH BAJA STELL", 148.5, 22, { align: "center" });
+
+        doc.autoTable({
+            head: [['NO', 'TANGGAL', 'PLAT NO', 'SOPIR', 'PROJECT', 'BARANG', 'M / B (M3)', '+/-', 'TOTAL BOP', 'HARGA JUAL', 'PROFIT/MARGIN']],
+            body: bodyTableBulanan,
+            foot: [[
+                { content: 'TOTAL BULANAN', colSpan: 6, styles: { halign: 'center' } },
+                `${akumulasiVolM.toFixed(2)} / ${akumulasiVolB.toFixed(2)}`,
+                (akumulasiVolB - akumulasiVolM >= 0 ? "+" : "") + (akumulasiVolB - akumulasiVolM).toFixed(2),
+                `Rp ${akumulasiBop.toLocaleString('id-ID')}`, 
+                `Rp ${akumulasiJual.toLocaleString('id-ID')}`, 
+                `Rp ${akumulasiProfitKotor.toLocaleString('id-ID')}`
+            ]],
+            startY: 28,
+            showFoot: 'lastPage',
+            theme: 'grid',
+            styles: { fontSize: 8, halign: 'center', cellPadding: 2 },
+            headStyles: { fillColor: [44, 62, 80], fontStyle: 'bold' },
+            footStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center' }
+        });
+
+        let totalY = doc.lastAutoTable.finalY + 8;
+        if (totalY > 140) { doc.addPage(); totalY = 20; }
+
+        const textBreakdown = `[ Split 1/2: ${volB_Split12.toFixed(2)} M³ | Screening: ${volB_Screening.toFixed(2)} M³ | Abu Batu: ${volB_AbuBatu.toFixed(2)} M³ ]`;
+
+        doc.setFillColor(245, 247, 250);
+        doc.rect(14, totalY, 165, 52, "F"); 
+        
+        doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
+        doc.text(`RINGKASAN FINANSIAL BULAN ${inputBulanTahun} (${totalRitase} RIT) :`, 18, totalY + 6);
+        
+        doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+        doc.text(`• TOTAL VOLUME (MUAT / BONGKAR)`, 18, totalY + 12);
+        doc.text(`:`, 74, totalY + 12);
+        doc.text(`${akumulasiVolM.toFixed(2)} M³ / ${akumulasiVolB.toFixed(2)} M³`, 125, totalY + 12, { align: "right" });
+
+        doc.setFontSize(7.5); doc.setFont("helvetica", "italic"); doc.setTextColor(80, 80, 80);
+        doc.text(`  Rincian Bongkar`, 18, totalY + 16);
+        doc.text(`:`, 74, totalY + 16);
+        doc.text(`${textBreakdown}`, 125, totalY + 16, { align: "right" });
+
+        doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(0, 0, 0);
+        doc.text(`• TOTAL BIAYA OPERASIONAL (BOP)`, 18, totalY + 22);
+        doc.text(`:`, 74, totalY + 22);
+        doc.text(`Rp`, 78, totalY + 22); doc.text(`${akumulasiBop.toLocaleString('id-ID')}`, 125, totalY + 22, { align: "right" });
+        
+        doc.text(`• TOTAL HARGA JUAL`, 18, totalY + 27);
+        doc.text(`:`, 74, totalY + 27);
+        doc.text(`Rp`, 78, totalY + 27); doc.text(`${akumulasiJual.toLocaleString('id-ID')}`, 125, totalY + 27, { align: "right" });
+
+        doc.setTextColor(255, 0, 0); 
+        doc.text(`• TOTAL PENGELUARAN (Kas/Ops)`, 18, totalY + 34);
+        doc.text(`:`, 74, totalY + 34);
+        doc.text(`Rp`, 78, totalY + 34); doc.text(`${totalPengeluaranOps.toLocaleString('id-ID')}`, 125, totalY + 34, { align: "right" });
+        
+        doc.setTextColor(0, 102, 255); 
+        doc.text(`• ROYALTI PERUSAHAAN (10 %)`, 18, totalY + 39);
+        doc.text(`:`, 74, totalY + 39);
+        doc.text(`Rp`, 78, totalY + 39); doc.text(`${potonganPerusahaan.toLocaleString('id-ID')}`, 125, totalY + 39, { align: "right" });
+
+        doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+        if (keuntunganBersihFinal >= 0) {
+            doc.setTextColor(46, 204, 113);
+            doc.text(`TOTAL PROFIT BERSIH`, 18, totalY + 46);
+            doc.text(`:`, 74, totalY + 46);
+            doc.text(`Rp`, 78, totalY + 46); 
+            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 46, { align: "right" });
+        } else {
+            doc.setTextColor(255, 0, 0);
+            doc.text(`TOTAL MINUS`, 18, totalY + 46);
+            doc.text(`:`, 74, totalY + 46);
+            doc.text(`Rp`, 78, totalY + 46); 
+            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 46, { align: "right" });
+        }
+
+        doc.save(`REKAP-BULANAN-${targetBulan}-${targetTahun}.pdf`);
+
+        // 4. KONFIRMASI HAPUS DATA PERMANEN PASCA REKAP BULANAN
+        const yakinHapus = confirm(`PDF Rekap Bulanan (${inputBulanTahun}) berhasil didownload.\n\nApakah Anda ingin MENGHAPUS PERMANEN data berstatus 'FILE' untuk bulan ${inputBulanTahun} dari Firebase agar tidak memenuhi database?`);
+
+        if (yakinHapus) {
+            document.getElementById('load-txt').innerText = "MENGHAPUS DATA BULANAN DARI FIREBASE...";
+            document.getElementById('loader').style.display = 'flex';
+
+            const deleteLogPromises = deleteLogKeys.map(k => remove(ref(db, `bbs_logs/${dbKey}/${k}`)));
+            const deleteOpsPromises = deleteOpsKeys.map(kOps => remove(ref(db, `bbs_operasional/${dbKey}/${kOps}`)));
+
+            await Promise.all([...deleteLogPromises, ...deleteOpsPromises]);
+
+            document.getElementById('loader').style.display = 'none';
+            alert(`🔥 SUKSES!\n\nLaporan terdownload & data bulan ${inputBulanTahun} telah dibersihkan dari Firebase.`);
+        } else {
+            alert(`📄 SUKSES!\n\nLaporan terdownload. Data bulan ${inputBulanTahun} TETAP TERSIMPAN di Firebase.`);
+        }
+
+        location.reload();
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById('loader').style.display = 'none';
+        alert("Gagal memproses Rekap Bulanan: " + err.message);
     }
 };
     
