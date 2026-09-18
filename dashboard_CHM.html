@@ -546,6 +546,7 @@ function renderCards(data, targetContainerId, dbKey, isManyar = false) {
         const statusMobil = (i.status || "").toUpperCase();
         
         if(statusMobil === 'ARCHIVE') return;
+        if(statusMobil === 'FILE') return;
 
         count++;
         tm += Number(i.volM || 0); 
