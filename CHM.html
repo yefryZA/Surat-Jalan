@@ -115,7 +115,7 @@
         <button class="btn" style="background:#f1c40f; color:#000000; font-weight:bold; font-family:'Orbitron'; font-size: 11px; padding: 12px 15px; border: none; border-radius: 8px; cursor: pointer; flex: 1; min-width: 180px; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 60px;" onclick="window.konfirmasiGenerate100Rit()">
             📦 GENERATE 100 RIT
         </button>
-        <button class="btn" style="background:#1af10f; color:#000000; font-weight:bold; font-family:'Orbitron'; font-size: 11px; padding: 12px 15px; border: none; border-radius: 8px; cursor: pointer; flex: 1; min-width: 180px; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 60px;" onclick="window.konfirmasiGenerate100Rit()">
+        <button class="btn" style="background:#1af10f; color:#000000; font-weight:bold; font-family:'Orbitron'; font-size: 11px; padding: 12px 15px; border: none; border-radius: 8px; cursor: pointer; flex: 1; min-width: 180px; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 60px;" onclick="window.konfirmasiGenerateBulanan()">
     📅 Generate Rekap Bulanan
 </button>
         
@@ -128,29 +128,29 @@
         </div>
     </div>
   
-   <!-- POP UP / MODAL 2: MANAGEMENT STATUS OTW (INPUT HARGA JUAL & VOLUME BONGKAR) -->
-    <div id="modal-otw-manager" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:2000; padding:20px; overflow-y:auto;">
-        <div class="card" style="max-width:400px; margin:20px auto;">
-            <h3 id="otw-title" style="color:var(--gold); font-size:14px; text-align:center; border-bottom:1px solid var(--glass); padding-bottom:10px;">PROSES KEBERANGKATAN UNIT (OTW)</h3>
-            
-            <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 11px; text-align: center;" id="otw-bop-info">
-                <!-- Info BOP yang sudah diinput sebelumnya akan ditampilkan di sini -->
-            </div>
-
-            <div style="margin-top:15px;">
-                <label class="lbl">TOTAL VOLUME BONGKAR (M3)</label>
-                <input type="number" id="input-vol-bongkar" step="0.01" placeholder="CONTOH: 22.50" style="border: 1px solid var(--gold); font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88;">
-            </div>
-
-            <div>
-                <label class="lbl">HARGA JUAL KE KONSUMEN (RP)</label>
-                <input type="text" id="input-harga-jual" placeholder="CONTOH: 1.100.000" style="border: 1px solid var(--gold); font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88;" oninput="formatRupiahOtomatis(this)">
-            </div>
-
-            <button class="btn btn-green" style="margin-bottom:10px;" onclick="prosesTugasSelesai()">🚀 PROSES OTW & CETAK LAPORAN</button>
-            <button class="btn" style="background:none; color:#8892B0" onclick="closeOtwManager()">BATAL</button>
+<!-- POP UP / MODAL 2: MANAGEMENT STATUS OTW (INPUT HARGA JUAL & VOLUME BONGKAR) -->
+<div id="modal-otw-manager" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:2000; padding:20px; overflow-y:auto;">
+    <div class="card" style="max-width:400px; margin:20px auto;">
+        <h3 id="otw-title" style="color:var(--gold); font-size:14px; text-align:center; border-bottom:1px solid var(--glass); padding-bottom:10px;">PROSES KEBERANGKATAN UNIT (OTW)</h3>
+        
+        <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 11px; text-align: center;" id="otw-bop-info">
+            <!-- Info BOP yang sudah diinput sebelumnya akan ditampilkan di sini -->
         </div>
+
+        <div style="margin-top:15px;">
+            <label class="lbl">TOTAL VOLUME BONGKAR (M3)</label>
+            <input type="number" id="input-vol-bongkar" step="0.01" placeholder="00.00 M3" style="border: 1px solid var(--gold); font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88;">
+        </div>
+
+        <div>
+            <label class="lbl">HARGA JUAL SATUAN / M3 (RP)</label>
+            <input type="text" id="input-harga-jual" placeholder="HARGA SATUAN" style="border: 1px solid var(--gold); font-family: 'Arial Black', sans-serif; font-weight: 900; font-size: 17px; color: #00ff88;" oninput="formatRupiahOtomatis(this)">
+        </div>
+
+        <button class="btn btn-green" style="margin-bottom:10px;" onclick="prosesTugasSelesai()">🚀 PROSES OTW & CETAK LAPORAN</button>
+        <button class="btn" style="background:none; color:#8892B0" onclick="closeOtwManager()">BATAL</button>
     </div>
+</div>
 
 <div id="view-cilegon" class="container">
     <div class="card">
@@ -222,7 +222,7 @@
     const firebaseConfig = { apiKey: "AIzaSyAfeLTKRQ66tjZjAt7tg6KcrWhtmv0y3fo", databaseURL: "https://berkah-baja-steel-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "berkah-baja-steel" };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const dbKey = "CHM1";
+    const dbKey = "CONTOH";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyZhTJrSLlzeV8DyC1NcZciJyUrTLzMff5UahkTpZcDuF6PPX2o4E9Pc2K_guOhMjEh/exec";
 
     const mode = new URLSearchParams(window.location.search).get('mode');
@@ -709,48 +709,55 @@ window.closeOtwManager = () => {
 
 window.prosesTugasSelesai = async () => {
     const firebaseKey = window.currentActiveKey;
-    if(!firebaseKey) return alert("TIDAK ADA DATA UNIT YANG TERPILIH!");
+    if (!firebaseKey) return alert("TIDAK ADA DATA UNIT YANG TERPILIH!");
     
     const volBongkarInput = document.getElementById('input-vol-bongkar').value;
     const jualRawValue = document.getElementById('input-harga-jual').value;
-    const hargaJualInput = Number(jualRawValue.replace(/[^0-9]/g, '')) || 0;
     
-    if(!volBongkarInput || !hargaJualInput) {
-        return alert("HARAP ISI VOLUME BONGKAR DAN HARGA JUAL KONSUMEN!");
+    const volumeBongkar = Number(volBongkarInput) || 0;
+    const hargaJualSatuan = Number(jualRawValue.replace(/[^0-9]/g, '')) || 0;
+    
+    if (!volumeBongkar || !hargaJualSatuan) {
+        return alert("HARAP ISI VOLUME BONGKAR DAN HARGA JUAL SATUAN KONSUMEN!");
     }
     
     try {
-        // 1. Ambil data awal si mobil dari database
+        // 1. Ambil data awal dari database
         const snap = await get(ref(db, `bbs_logs/${dbKey}/${firebaseKey}`));
-        if(!snap.exists()) return alert("Data unit tidak ditemukan!");
+        if (!snap.exists()) return alert("Data unit tidak ditemukan!");
         
         const dataMobil = snap.val();
         
-        if(!dataMobil.bop_unit) {
+        if (!dataMobil.bop_unit) {
             return alert("UNIT INI BELUM MEMILIKI DATA BOP. SELESAIKAN SET BOP TERLEBIH DAHULU!");
         }
 
-        const jamBongkarSkr = new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', hour12: false});
+        const jamBongkarSkr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
         
-        // Hitung margin secara otomatis berdasarkan logika baru
+        // 2. Kalkulasi Perkalian Volume x Harga Satuan
+        const totalHargaJual = volumeBongkar * hargaJualSatuan;
+        
+        // Hitung margin total (Total Penjualan - BOP Unit)
         const totalBopMobil = dataMobil.bop_unit;
-        const totalMarginPerUnit = hargaJualInput - totalBopMobil;
+        const totalMarginPerUnit = totalHargaJual - totalBopMobil;
 
-        // Gabungkan data inputan baru ke dalam objek mobil untuk dikirim ke fungsi PDF
-        dataMobil.volB = Number(volBongkarInput);
-        dataMobil.harga_jual = hargaJualInput;
+        // 3. Update properti objek untuk keperluan PDF
+        dataMobil.volB = volumeBongkar;
+        dataMobil.harga_jual_satuan = hargaJualSatuan;
+        dataMobil.harga_jual = totalHargaJual; // Total Penjualan
         dataMobil.margin_per_unit = totalMarginPerUnit;
         
-        // 2. Update datanya langsung ke database per mobil itu sendiri
+        // 4. Update data ke Firebase
         await update(ref(db, `bbs_logs/${dbKey}/${firebaseKey}`), { 
-            volB: dataMobil.volB, 
+            volB: volumeBongkar, 
             status: 'OTW', 
             jamB: jamBongkarSkr,
-            harga_jual: hargaJualInput,
+            harga_jual_satuan: hargaJualSatuan,
+            harga_jual: totalHargaJual,
             margin_per_unit: totalMarginPerUnit
         });
         
-        // 3. PANGGIL KODE GENERATE PDF UNTUK 1 UNIT INI
+        // 5. Cetak PDF
         await window.generatePDF(dataMobil, jamBongkarSkr);
         
         alert("PROSES DATA & CETAK PDF SELESAI!");
@@ -1659,6 +1666,15 @@ window.konfirmasiGenerate100Rit = async () => {
 };
 
 window.konfirmasiGenerateBulanan = async () => {
+    // 1. PIN KEAMANAN UNTUK REKAP BULANAN
+    const KODE_RAHASIA = "BBS";
+    const inputKode = prompt("⚠️ PERINGATAN REKAP BULANAN:\n\nMasukkan PIN Keamanan untuk memproses Laporan Rekapitulasi Bulanan:");
+    
+    if (inputKode === null) return;
+    if (inputKode !== KODE_RAHASIA) {
+        return alert("❌ KODE SALAH! Akses ditolak.");
+    }
+
     const inputBulanTahun = prompt("📅 MASUKKAN BULAN & TAHUN REKAPITULASI:\n\nFormat: MM/YYYY (Contoh: 08/2026 untuk Agustus 2026)");
     if (!inputBulanTahun) return;
 
@@ -1671,6 +1687,12 @@ window.konfirmasiGenerateBulanan = async () => {
     document.getElementById('loader').style.display = 'flex';
 
     try {
+        // Load Gambar KOP dan TTD secara Paralel
+        const [kopBase64, ttdBase64] = await Promise.all([
+            loadImageAsBase64('kop.jpeg'),
+            loadImageAsBase64('ttdM.png')
+        ]);
+
         const [snapshotLogs, snapshotOps] = await Promise.all([
             get(ref(db, `bbs_logs/${dbKey}`)),
             get(ref(db, `bbs_operasional/${dbKey}`))
@@ -1690,7 +1712,7 @@ window.konfirmasiGenerateBulanan = async () => {
         const bodyTableBulanan = [];
         const deleteLogKeys = [];
 
-        // 1. FILTER DATA LOGS BERSTATUS 'FILE' SESUAI BULAN & TAHUN
+        // 2. FILTER DATA LOGS BERSTATUS 'FILE' SESUAI BULAN & TAHUN
         Object.keys(dataLogs).forEach(key => {
             const item = dataLogs[key];
             const statusMobil = (item.status || "").toUpperCase();
@@ -1747,7 +1769,7 @@ window.konfirmasiGenerateBulanan = async () => {
             }
         });
 
-        // 2. FILTER DATA OPERASIONAL BERSTATUS 'FILE' SESUAI BULAN & TAHUN
+        // 3. FILTER DATA OPERASIONAL BERSTATUS 'FILE' SESUAI BULAN & TAHUN
         let totalPengeluaranOps = 0;
         const deleteOpsKeys = [];
 
@@ -1779,7 +1801,7 @@ window.konfirmasiGenerateBulanan = async () => {
             return alert(`Tidak ditemukan data berstatus 'FILE' untuk periode ${inputBulanTahun}.`);
         }
 
-        // 3. FINANSIAL & PDF GENERATION
+        // 4. FINANSIAL & PDF GENERATION
         const potonganPerusahaan = akumulasiProfitKotor > 0 ? Math.round(akumulasiProfitKotor * 0.10) : 0;
         const keuntunganBersihFinal = akumulasiProfitKotor - totalPengeluaranOps - potonganPerusahaan;
 
@@ -1865,9 +1887,28 @@ window.konfirmasiGenerateBulanan = async () => {
             doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 46, { align: "right" });
         }
 
+        // --- TANDA TANGAN MANAGER ---
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+        doc.text("Hormat Kami,", 245, totalY + 6, { align: "center" });
+        
+        if (ttdBase64) {
+            doc.addImage(ttdBase64, 'PNG', 230, totalY + 10, 30, 20);
+        }
+
+        doc.setFont("helvetica", "bold");
+        doc.text("YEFRY DESFIRMANZA", 245, totalY + 36, { align: "center", underline: true });
+        
+        doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+        doc.text("MANAGER", 245, totalY + 40, { align: "center" });
+
+        const skrg = new Date();
+        doc.setFontSize(7); doc.setFont("helvetica", "italic"); doc.setTextColor(150, 150, 150);
+        doc.text(`E-Laporan Bulanan dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 56);
+
         doc.save(`REKAP-BULANAN-${targetBulan}-${targetTahun}.pdf`);
 
-        // 4. KONFIRMASI HAPUS DATA PERMANEN PASCA REKAP BULANAN
+        // 5. KONFIRMASI HAPUS DATA PERMANEN PASCA REKAP BULANAN
         const yakinHapus = confirm(`PDF Rekap Bulanan (${inputBulanTahun}) berhasil didownload.\n\nApakah Anda ingin MENGHAPUS PERMANEN data berstatus 'FILE' untuk bulan ${inputBulanTahun} dari Firebase agar tidak memenuhi database?`);
 
         if (yakinHapus) {
