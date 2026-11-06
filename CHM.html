@@ -1709,17 +1709,18 @@ window.konfirmasiGenerateBulanan = async () => {
         let akumulasiBop = 0, akumulasiJual = 0, akumulasiProfitKotor = 0;
         let volB_Split12 = 0, volB_Screening = 0, volB_AbuBatu = 0;
 
-        const bodyTableBulanan = [];
+        const bodyTableFinansial = [];
+        const bodyTableMuatan = [];
         const deleteLogKeys = [];
 
         // 2. FILTER DATA LOGS BERSTATUS 'FILE' SESUAI BULAN & TAHUN
         Object.keys(dataLogs).forEach(key => {
             const item = dataLogs[key];
             const statusMobil = (item.status || "").toUpperCase();
-            const tglStr = item.tgl || item.tanggal || ""; // Format: 20/8/2026 atau 20/08/2026
+            const tglStr = item.tgl || item.tanggal || "";
 
             if (statusMobil === 'FILE' && tglStr) {
-                const parts = tglStr.split('/'); // [DD, MM, YYYY]
+                const parts = tglStr.split('/');
                 if (parts.length === 3) {
                     const blnData = parts[1].padStart(2, '0');
                     const thnData = parts[2];
@@ -1749,7 +1750,8 @@ window.konfirmasiGenerateBulanan = async () => {
                             volB_AbuBatu += vBongkar;
                         }
 
-                        bodyTableBulanan.push([
+                        // Data Tabel 1: Finansial (Landscape)
+                        bodyTableFinansial.push([
                             totalRitase,
                             tglStr,
                             item.plat || '-',
@@ -1763,13 +1765,24 @@ window.konfirmasiGenerateBulanan = async () => {
                             marginProfit !== 0 ? `Rp ${marginProfit.toLocaleString('id-ID')}` : '-'
                         ]);
 
+                        // Data Tabel 2: Muatan Terkirim (Portrait)
+                        bodyTableMuatan.push([
+                            totalRitase,
+                            tglStr,
+                            item.plat || '-',
+                            item.sopir || '-',
+                            item.project || 'LOSARANG',
+                            namaBarang || '-',
+                            `${vBongkar.toFixed(2)} M³`
+                        ]);
+
                         deleteLogKeys.push(key);
                     }
                 }
             }
         });
 
-        // 3. FILTER DATA OPERASIONAL BERSTATUS 'FILE' SESUAI BULAN & TAHUN
+        // 3. FILTER DATA OPERASIONAL
         let totalPengeluaranOps = 0;
         const deleteOpsKeys = [];
 
@@ -1801,21 +1814,25 @@ window.konfirmasiGenerateBulanan = async () => {
             return alert(`Tidak ditemukan data berstatus 'FILE' untuk periode ${inputBulanTahun}.`);
         }
 
-        // 4. FINANSIAL & PDF GENERATION
+        const { jsPDF } = window.jspdf;
+        const skrg = new Date();
+
+        // =========================================================================
+        // PDF 1: REKAP FINANSIAL BULANAN (LANDSCAPE - A4)
+        // =========================================================================
         const potonganPerusahaan = akumulasiProfitKotor > 0 ? Math.round(akumulasiProfitKotor * 0.10) : 0;
         const keuntunganBersihFinal = akumulasiProfitKotor - totalPengeluaranOps - potonganPerusahaan;
 
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('l', 'mm', 'a4');
+        const docFinansial = new jsPDF('l', 'mm', 'a4');
 
-        doc.setFontSize(14); doc.setFont("helvetica", "bold");
-        doc.text(`LAPORAN REKAPITULASI BULANAN (${inputBulanTahun})`, 148.5, 16, { align: "center" });
-        doc.setFontSize(11); doc.setFont("helvetica", "normal");
-        doc.text("PT. BERKAH BAJA STELL", 148.5, 22, { align: "center" });
+        docFinansial.setFontSize(14); docFinansial.setFont("helvetica", "bold");
+        docFinansial.text(`LAPORAN REKAPITULASI BULANAN (${inputBulanTahun})`, 148.5, 16, { align: "center" });
+        docFinansial.setFontSize(11); docFinansial.setFont("helvetica", "normal");
+        docFinansial.text("PT. BERKAH BAJA STELL", 148.5, 22, { align: "center" });
 
-        doc.autoTable({
+        docFinansial.autoTable({
             head: [['NO', 'TANGGAL', 'PLAT NO', 'SOPIR', 'PROJECT', 'BARANG', 'M / B (M3)', '+/-', 'TOTAL BOP', 'HARGA JUAL', 'PROFIT/MARGIN']],
-            body: bodyTableBulanan,
+            body: bodyTableFinansial,
             foot: [[
                 { content: 'TOTAL BULANAN', colSpan: 6, styles: { halign: 'center' } },
                 `${akumulasiVolM.toFixed(2)} / ${akumulasiVolB.toFixed(2)}`,
@@ -1832,84 +1849,175 @@ window.konfirmasiGenerateBulanan = async () => {
             footStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center' }
         });
 
-        let totalY = doc.lastAutoTable.finalY + 8;
-        if (totalY > 140) { doc.addPage(); totalY = 20; }
+        let totalYFin = docFinansial.lastAutoTable.finalY + 8;
+        if (totalYFin > 140) { docFinansial.addPage(); totalYFin = 20; }
 
         const textBreakdown = `[ Split 1/2: ${volB_Split12.toFixed(2)} M³ | Screening: ${volB_Screening.toFixed(2)} M³ | Abu Batu: ${volB_AbuBatu.toFixed(2)} M³ ]`;
 
-        doc.setFillColor(245, 247, 250);
-        doc.rect(14, totalY, 165, 52, "F"); 
+        docFinansial.setFillColor(245, 247, 250);
+        docFinansial.rect(14, totalYFin, 165, 52, "F"); 
         
-        doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
-        doc.text(`RINGKASAN FINANSIAL BULAN ${inputBulanTahun} (${totalRitase} RIT) :`, 18, totalY + 6);
+        docFinansial.setFontSize(10); docFinansial.setFont("helvetica", "bold"); docFinansial.setTextColor(0, 0, 0);
+        docFinansial.text(`RINGKASAN FINANSIAL BULAN ${inputBulanTahun} (${totalRitase} RIT) :`, 18, totalYFin + 6);
         
-        doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-        doc.text(`• TOTAL VOLUME (MUAT / BONGKAR)`, 18, totalY + 12);
-        doc.text(`:`, 74, totalY + 12);
-        doc.text(`${akumulasiVolM.toFixed(2)} M³ / ${akumulasiVolB.toFixed(2)} M³`, 125, totalY + 12, { align: "right" });
+        docFinansial.setFont("helvetica", "normal"); docFinansial.setFontSize(9);
+        docFinansial.text(`• TOTAL VOLUME (MUAT / BONGKAR)`, 18, totalYFin + 12);
+        docFinansial.text(`:`, 74, totalYFin + 12);
+        docFinansial.text(`${akumulasiVolM.toFixed(2)} M³ / ${akumulasiVolB.toFixed(2)} M³`, 125, totalYFin + 12, { align: "right" });
 
-        doc.setFontSize(7.5); doc.setFont("helvetica", "italic"); doc.setTextColor(80, 80, 80);
-        doc.text(`  Rincian Bongkar`, 18, totalY + 16);
-        doc.text(`:`, 74, totalY + 16);
-        doc.text(`${textBreakdown}`, 125, totalY + 16, { align: "right" });
+        docFinansial.setFontSize(7.5); docFinansial.setFont("helvetica", "italic"); docFinansial.setTextColor(80, 80, 80);
+        docFinansial.text(`  Rincian Bongkar`, 18, totalYFin + 16);
+        docFinansial.text(`:`, 74, totalYFin + 16);
+        docFinansial.text(`${textBreakdown}`, 125, totalYFin + 16, { align: "right" });
 
-        doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(0, 0, 0);
-        doc.text(`• TOTAL BIAYA OPERASIONAL (BOP)`, 18, totalY + 22);
-        doc.text(`:`, 74, totalY + 22);
-        doc.text(`Rp`, 78, totalY + 22); doc.text(`${akumulasiBop.toLocaleString('id-ID')}`, 125, totalY + 22, { align: "right" });
+        docFinansial.setFontSize(9); docFinansial.setFont("helvetica", "normal"); docFinansial.setTextColor(0, 0, 0);
+        docFinansial.text(`• TOTAL BIAYA OPERASIONAL (BOP)`, 18, totalYFin + 22);
+        docFinansial.text(`:`, 74, totalYFin + 22);
+        docFinansial.text(`Rp`, 78, totalYFin + 22); docFinansial.text(`${akumulasiBop.toLocaleString('id-ID')}`, 125, totalYFin + 22, { align: "right" });
         
-        doc.text(`• TOTAL HARGA JUAL`, 18, totalY + 27);
-        doc.text(`:`, 74, totalY + 27);
-        doc.text(`Rp`, 78, totalY + 27); doc.text(`${akumulasiJual.toLocaleString('id-ID')}`, 125, totalY + 27, { align: "right" });
+        docFinansial.text(`• TOTAL HARGA JUAL`, 18, totalYFin + 27);
+        docFinansial.text(`:`, 74, totalYFin + 27);
+        docFinansial.text(`Rp`, 78, totalYFin + 27); docFinansial.text(`${akumulasiJual.toLocaleString('id-ID')}`, 125, totalYFin + 27, { align: "right" });
 
-        doc.setTextColor(255, 0, 0); 
-        doc.text(`• TOTAL PENGELUARAN (Kas/Ops)`, 18, totalY + 34);
-        doc.text(`:`, 74, totalY + 34);
-        doc.text(`Rp`, 78, totalY + 34); doc.text(`${totalPengeluaranOps.toLocaleString('id-ID')}`, 125, totalY + 34, { align: "right" });
+        docFinansial.setTextColor(255, 0, 0); 
+        docFinansial.text(`• TOTAL PENGELUARAN (Kas/Ops)`, 18, totalYFin + 34);
+        docFinansial.text(`:`, 74, totalYFin + 34);
+        docFinansial.text(`Rp`, 78, totalYFin + 34); docFinansial.text(`${totalPengeluaranOps.toLocaleString('id-ID')}`, 125, totalYFin + 34, { align: "right" });
         
-        doc.setTextColor(0, 102, 255); 
-        doc.text(`• ROYALTI PERUSAHAAN (10 %)`, 18, totalY + 39);
-        doc.text(`:`, 74, totalY + 39);
-        doc.text(`Rp`, 78, totalY + 39); doc.text(`${potonganPerusahaan.toLocaleString('id-ID')}`, 125, totalY + 39, { align: "right" });
+        docFinansial.setTextColor(0, 102, 255); 
+        docFinansial.text(`• ROYALTI PERUSAHAAN (10 %)`, 18, totalYFin + 39);
+        docFinansial.text(`:`, 74, totalYFin + 39);
+        docFinansial.text(`Rp`, 78, totalYFin + 39); docFinansial.text(`${potonganPerusahaan.toLocaleString('id-ID')}`, 125, totalYFin + 39, { align: "right" });
 
-        doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+        docFinansial.setFont("helvetica", "bold"); docFinansial.setFontSize(14);
         if (keuntunganBersihFinal >= 0) {
-            doc.setTextColor(46, 204, 113);
-            doc.text(`TOTAL PROFIT BERSIH`, 18, totalY + 46);
-            doc.text(`:`, 74, totalY + 46);
-            doc.text(`Rp`, 78, totalY + 46); 
-            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 46, { align: "right" });
+            docFinansial.setTextColor(46, 204, 113);
+            docFinansial.text(`TOTAL PROFIT BERSIH`, 18, totalYFin + 46);
+            docFinansial.text(`:`, 74, totalYFin + 46);
+            docFinansial.text(`Rp`, 78, totalYFin + 46); 
+            docFinansial.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalYFin + 46, { align: "right" });
         } else {
-            doc.setTextColor(255, 0, 0);
-            doc.text(`TOTAL MINUS`, 18, totalY + 46);
-            doc.text(`:`, 74, totalY + 46);
-            doc.text(`Rp`, 78, totalY + 46); 
-            doc.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalY + 46, { align: "right" });
+            docFinansial.setTextColor(255, 0, 0);
+            docFinansial.text(`TOTAL MINUS`, 18, totalYFin + 46);
+            docFinansial.text(`:`, 74, totalYFin + 46);
+            docFinansial.text(`Rp`, 78, totalYFin + 46); 
+            docFinansial.text(`${keuntunganBersihFinal.toLocaleString('id-ID')}`, 125, totalYFin + 46, { align: "right" });
         }
 
-        // --- TANDA TANGAN MANAGER ---
-        doc.setTextColor(0, 0, 0);
-        doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-        doc.text("Hormat Kami,", 245, totalY + 6, { align: "center" });
+        docFinansial.setTextColor(0, 0, 0);
+        docFinansial.setFont("helvetica", "normal"); docFinansial.setFontSize(10);
+        docFinansial.text("Hormat Kami,", 245, totalYFin + 6, { align: "center" });
         
         if (ttdBase64) {
-            doc.addImage(ttdBase64, 'PNG', 230, totalY + 10, 30, 20);
+            docFinansial.addImage(ttdBase64, 'PNG', 230, totalYFin + 10, 30, 20);
         }
 
-        doc.setFont("helvetica", "bold");
-        doc.text("YEFRY DESFIRMANZA", 245, totalY + 36, { align: "center", underline: true });
+        docFinansial.setFont("helvetica", "bold");
+        docFinansial.text("YEFRY DESFIRMANZA", 245, totalYFin + 36, { align: "center", underline: true });
         
-        doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-        doc.text("MANAGER", 245, totalY + 40, { align: "center" });
+        docFinansial.setFont("helvetica", "normal"); docFinansial.setFontSize(9);
+        docFinansial.text("MANAGER", 245, totalYFin + 40, { align: "center" });
 
-        const skrg = new Date();
-        doc.setFontSize(7); doc.setFont("helvetica", "italic"); doc.setTextColor(150, 150, 150);
-        doc.text(`E-Laporan Bulanan dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalY + 56);
+        docFinansial.setFontSize(7); docFinansial.setFont("helvetica", "italic"); docFinansial.setTextColor(150, 150, 150);
+        docFinansial.text(`E-Laporan Bulanan dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalYFin + 56);
 
-        doc.save(`REKAP-BULANAN-${targetBulan}-${targetTahun}.pdf`);
+        // SAVE PDF 1 (FINANSIAL LANDSCAPE)
+        docFinansial.save(`REKAP-BULANAN-FINANSIAL-${targetBulan}-${targetTahun}.pdf`);
 
-        // 5. KONFIRMASI HAPUS DATA PERMANEN PASCA REKAP BULANAN
-        const yakinHapus = confirm(`PDF Rekap Bulanan (${inputBulanTahun}) berhasil didownload.\n\nApakah Anda ingin MENGHAPUS PERMANEN data berstatus 'FILE' untuk bulan ${inputBulanTahun} dari Firebase agar tidak memenuhi database?`);
+        // JEDA 800ms UNTUK MENCEGAH BROWSER MEMBLOKIR DOWNLOAD KEDUA
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // =========================================================================
+        // PDF 2: REKAP MUATAN TERKIRIM BULANAN (PORTRAIT - A4)
+        // =========================================================================
+        const docMuatan = new jsPDF('p', 'mm', 'a4');
+
+        docMuatan.setFontSize(14); docMuatan.setFont("helvetica", "bold");
+        docMuatan.text(`LAPORAN REKAPITULASI MUATAN BULANAN (${inputBulanTahun})`, 105, 16, { align: "center" });
+        docMuatan.setFontSize(11); docMuatan.setFont("helvetica", "normal");
+        docMuatan.text("PT. BERKAH BAJA STELL", 105, 22, { align: "center" });
+
+        docMuatan.autoTable({
+            head: [['NO', 'TANGGAL', 'PLAT NOMOR', 'SOPIR', 'PROJECT', 'BARANG', 'KUBIKASI BONGKAR']],
+            body: bodyTableMuatan,
+            foot: [[
+                { content: 'TOTAL MATERIAL TERKIRIM', colSpan: 6, styles: { halign: 'center' } },
+                `${akumulasiVolB.toFixed(2)} M³`
+            ]],
+            startY: 28,
+            showFoot: 'lastPage',
+            theme: 'grid',
+            styles: { fontSize: 8, halign: 'center', cellPadding: 2 },
+            headStyles: { fillColor: [44, 62, 80], fontStyle: 'bold' },
+            footStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center' },
+            columnStyles: {
+                0: { cellWidth: 10 },
+                1: { cellWidth: 24 },
+                2: { cellWidth: 26 },
+                3: { cellWidth: 32 },
+                4: { cellWidth: 32 },
+                5: { cellWidth: 33 },
+                6: { cellWidth: 25 }
+            }
+        });
+
+        let totalYMua = docMuatan.lastAutoTable.finalY + 8;
+        if (totalYMua > 220) { docMuatan.addPage(); totalYMua = 20; }
+
+        docMuatan.setFillColor(245, 247, 250);
+        docMuatan.rect(14, totalYMua, 115, 42, "F"); 
+        docMuatan.setDrawColor(200, 200, 200);
+        docMuatan.rect(14, totalYMua, 115, 42, "S");
+
+        docMuatan.setFontSize(10); docMuatan.setFont("helvetica", "bold"); docMuatan.setTextColor(0, 0, 0);
+        docMuatan.text(`RINCIAN MUATAN TERKIRIM (${totalRitase} RIT) :`, 18, totalYMua + 6);
+
+        docMuatan.setFont("helvetica", "normal"); docMuatan.setFontSize(9);
+        docMuatan.text(`TOTAL MATERIAL TERKIRIM`, 18, totalYMua + 13);
+        docMuatan.text(`:`, 75, totalYMua + 13);
+        docMuatan.setFont("helvetica", "bold");
+        docMuatan.text(`${akumulasiVolB.toFixed(2)} M³`, 122, totalYMua + 13, { align: "right" });
+
+        docMuatan.setFont("helvetica", "normal");
+        docMuatan.text(`- SPLIT 1.2`, 18, totalYMua + 20);
+        docMuatan.text(`:`, 75, totalYMua + 20);
+        docMuatan.text(`${volB_Split12.toFixed(2)} M³`, 122, totalYMua + 20, { align: "right" });
+
+        docMuatan.text(`- SCRENING`, 18, totalYMua + 26);
+        docMuatan.text(`:`, 75, totalYMua + 26);
+        docMuatan.text(`${volB_Screening.toFixed(2)} M³`, 122, totalYMua + 26, { align: "right" });
+
+        docMuatan.text(`- ABU BATU`, 18, totalYMua + 32);
+        docMuatan.text(`:`, 75, totalYMua + 32);
+        docMuatan.text(`${volB_AbuBatu.toFixed(2)} M³`, 122, totalYMua + 32, { align: "right" });
+
+        docMuatan.setTextColor(0, 0, 0);
+        docMuatan.setFont("helvetica", "normal"); docMuatan.setFontSize(10);
+        docMuatan.text("Hormat Kami,", 165, totalYMua + 6, { align: "center" });
+
+        if (ttdBase64) {
+            docMuatan.addImage(ttdBase64, 'PNG', 150, totalYMua + 10, 30, 20);
+        }
+
+        docMuatan.setFont("helvetica", "bold");
+        docMuatan.text("YEFRY DESFIRMANZA", 165, totalYMua + 36, { align: "center", underline: true });
+
+        docMuatan.setFont("helvetica", "normal"); docMuatan.setFontSize(9);
+        docMuatan.text("MANAGER", 165, totalYMua + 40, { align: "center" });
+
+        docMuatan.setFontSize(7); docMuatan.setFont("helvetica", "italic"); docMuatan.setTextColor(150, 150, 150);
+        docMuatan.text(`E-Laporan Rekap Muatan dicetak otomatis oleh System Digital PT.BBS pada ${skrg.toLocaleDateString('id-ID')} jam ${skrg.toLocaleTimeString('id-ID')}`, 14, totalYMua + 48);
+
+        // SAVE PDF 2 (MUATAN PORTRAIT)
+        docMuatan.save(`REKAP-MUATAN-${targetBulan}-${targetTahun}.pdf`);
+
+        // JEDA SEBELUM MEMUNCULKAN ALERT/CONFIRMATION
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // =========================================================================
+        // 4. KONFIRMASI HAPUS DATA PERMANEN PASCA REKAP BULANAN
+        // =========================================================================
+        const yakinHapus = confirm(`2 File PDF Rekap Bulanan (${inputBulanTahun}) berhasil didownload:\n1. REKAP-BULANAN-FINANSIAL-${targetBulan}-${targetTahun}.pdf (Landscape)\n2. REKAP-MUATAN-${targetBulan}-${targetTahun}.pdf (Portrait)\n\nApakah Anda ingin MENGHAPUS PERMANEN data berstatus 'FILE' untuk bulan ${inputBulanTahun} dari Firebase agar tidak memenuhi database?`);
 
         if (yakinHapus) {
             document.getElementById('load-txt').innerText = "MENGHAPUS DATA BULANAN DARI FIREBASE...";
@@ -1921,9 +2029,9 @@ window.konfirmasiGenerateBulanan = async () => {
             await Promise.all([...deleteLogPromises, ...deleteOpsPromises]);
 
             document.getElementById('loader').style.display = 'none';
-            alert(`🔥 SUKSES!\n\nLaporan terdownload & data bulan ${inputBulanTahun} telah dibersihkan dari Firebase.`);
+            alert(`🔥 SUKSES!\n\n2 File PDF terdownload & data bulan ${inputBulanTahun} telah dibersihkan dari Firebase.`);
         } else {
-            alert(`📄 SUKSES!\n\nLaporan terdownload. Data bulan ${inputBulanTahun} TETAP TERSIMPAN di Firebase.`);
+            alert(`📄 SUKSES!\n\n2 File PDF terdownload. Data bulan ${inputBulanTahun} TETAP TERSIMPAN di Firebase.`);
         }
 
         location.reload();
